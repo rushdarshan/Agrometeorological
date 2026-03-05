@@ -1,9 +1,10 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
-# Enums (matching DB models)
+
+# Enums
 class AdvisoryType(str, Enum):
     SOWING = "sowing"
     IRRIGATION = "irrigation"
@@ -13,10 +14,12 @@ class AdvisoryType(str, Enum):
     FROST_WARNING = "frost_warning"
     HEAT_STRESS = "heat_stress"
 
+
 class ConfidenceLevel(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
 
 # --- Authentication Schemas ---
 
@@ -35,6 +38,7 @@ class FarmerRegister(BaseModel):
     consented_data_use: bool
     preferred_language: str = "en"
 
+
 class FarmerResponse(BaseModel):
     id: int
     phone: str
@@ -42,9 +46,43 @@ class FarmerResponse(BaseModel):
     village: str
     district: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+
+class UserCreate(BaseModel):
+    email: str
+    full_name: str
+    phone: Optional[str] = None
+    password: str
+    role: Optional[str] = "extension_officer"
+
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    role: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user_id: int
+    email: str
+    role: str
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
 
 # --- Farm Schemas ---
 
@@ -58,6 +96,7 @@ class FarmCreate(BaseModel):
     soil_phosphorus: Optional[float] = None
     soil_potassium: Optional[float] = None
 
+
 class FarmResponse(BaseModel):
     id: int
     farmer_id: int
@@ -67,9 +106,10 @@ class FarmResponse(BaseModel):
     sowing_date: datetime
     is_active: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
 
 # --- Weather Forecast Schemas ---
 
@@ -84,6 +124,7 @@ class WeatherForecastCreate(BaseModel):
     source: str
     lead_time_hours: int
 
+
 class WeatherForecastResponse(BaseModel):
     id: int
     farm_id: int
@@ -94,9 +135,10 @@ class WeatherForecastResponse(BaseModel):
     source: str
     is_bias_corrected: bool
     ingested_at: datetime
-    
+
     class Config:
         from_attributes = True
+
 
 # --- Advisory Schemas ---
 
@@ -112,6 +154,7 @@ class AdvisoryCreate(BaseModel):
     generated_by: str
     model_version: Optional[str] = None
 
+
 class AdvisoryResponse(BaseModel):
     id: int
     farm_id: int
@@ -123,9 +166,10 @@ class AdvisoryResponse(BaseModel):
     reasoning: str
     generated_by: str
     generated_at: datetime
-    
+
     class Config:
         from_attributes = True
+
 
 # --- Message Schemas ---
 
@@ -135,6 +179,7 @@ class MessageCreate(BaseModel):
     channel: str = "sms"
     content: str
 
+
 class MessageResponse(BaseModel):
     id: int
     farmer_id: int
@@ -142,9 +187,10 @@ class MessageResponse(BaseModel):
     status: str
     sent_at: Optional[datetime]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
 
 # --- Feedback Schemas ---
 
@@ -153,15 +199,17 @@ class FeedbackCreate(BaseModel):
     feedback_type: str  # "helpful", "not_helpful", "neutral"
     feedback_text: Optional[str] = None
 
+
 class FeedbackResponse(BaseModel):
     id: int
     advisory_id: int
     farmer_id: int
     feedback_type: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
 
 # --- Dashboard Schemas ---
 
@@ -175,18 +223,49 @@ class AdvisoryWithFarmName(BaseModel):
     severity: ConfidenceLevel
     generated_at: datetime
 
+
 class FarmDashboardView(BaseModel):
     id: int
     farm_name: str
     crop_name: str
     area_hectares: float
     village: str
+    district: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     last_advisory: Optional[AdvisoryWithFarmName]
     last_weather: Optional[WeatherForecastResponse]
+
 
 class RegionalStats(BaseModel):
     total_farms: int
     total_farmers: int
     active_advisories_count: int
     avg_engagement_rate: float
-    most_common_advisory_type: str
+    advisory_type_distribution: dict
+    sms_delivery_rate: float
+
+
+class WeeklyTrendPoint(BaseModel):
+    date: str
+    count: int
+
+
+class AdvisoryTrendResponse(BaseModel):
+    trend: List[WeeklyTrendPoint]
+    days: int
+
+
+# --- Crop Prediction Schemas ---
+
+class CropPredictionResult(BaseModel):
+    crop: str
+    confidence: float
+
+
+class CropPredictResponse(BaseModel):
+    recommended_crop: Optional[str]
+    top_predictions: List[CropPredictionResult]
+    shap_explanation: Optional[dict]
+    model_version: Optional[str]
+    model_available: bool

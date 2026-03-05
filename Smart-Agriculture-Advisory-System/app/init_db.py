@@ -124,9 +124,39 @@ def seed_sample_data():
     finally:
         session.close()
 
+def seed_extension_officer():
+    """Seed a default extension officer so JWT login works on a fresh database."""
+    session = SessionLocal()
+    try:
+        if session.query(models.User).filter(models.User.email == "admin@agro.local").first():
+            print("Default officer already exists, skipping.")
+            return
+
+        from app.auth_utils import hash_password
+        officer = models.User(
+            email="admin@agro.local",
+            full_name="System Admin",
+            hashed_password=hash_password("admin123"),
+            role="admin",
+            is_active=True,
+        )
+        session.add(officer)
+        session.commit()
+        print("✓ Default extension officer created")
+        print("  Email:    admin@agro.local")
+        print("  Password: admin123")
+        print("  ⚠ Change this password before deploying to production!")
+    except Exception as e:
+        print(f"✗ Error seeding officer: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+
 if __name__ == "__main__":
     print("=== Agriculture Advisory System: Database Init ===\n")
     init_database()
     seed_sample_data()
+    seed_extension_officer()
     print("\n✓ Database ready!")
 

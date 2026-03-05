@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, desc
 from typing import List, Optional
 from datetime import datetime, timedelta
+from collections import defaultdict
+
 from app.database import get_db
 from app import schemas, models
 
 router = APIRouter()
+
 
 @router.get("/farms", response_model=List[dict])
 async def list_farms(
@@ -16,44 +19,65 @@ async def list_farms(
     db: Session = Depends(get_db)
 ):
     """
-    Get list of farms for dashboard display.
-    
-    Optional filters by district and crop.
-    Returns last advisory and weather for each farm.
+    Get list of farms for dashboard. Includes lat/lon for map view.
     """
     query = db.query(models.Farm, models.Farmer).join(models.Farmer)
-    
+
     if district:
         query = query.filter(models.Farmer.district == district)
     if crop:
         query = query.filter(models.Farm.crop_name == crop)
-    
+
     farms_data = query.limit(limit).all()
-    
+
     result = []
     for farm, farmer in farms_data:
-        # Get last advisory
+        lat, lon = None, None
+        try:
+            if farm.location and "," in str(farm.location):
+                parts = str(farm.location).split(",")
+                lat = float(parts[0].strip())
+                lon = float(parts[1].strip())
+        except Exception:
+            pass
+
         last_advisory = db.query(models.Advisory).filter(
             models.Advisory.farm_id == farm.id
         ).order_by(models.Advisory.generated_at.desc()).first()
-        
+
+        last_weather = db.query(models.WeatherForecast).filter(
+            models.WeatherForecast.farm_id == farm.id
+        ).order_by(models.WeatherForecast.ingested_at.desc()).first()
+
         result.append({
             "id": farm.id,
             "farm_name": farm.farm_name,
             "crop_name": farm.crop_name,
             "area_hectares": farm.area_hectares,
             "village": farmer.village,
+            "district": farmer.district,
+            "farmer_name": farmer.name,
+            "farmer_phone": farmer.phone,
+            "lat": lat,
+            "lon": lon,
             "last_advisory": {
                 "id": last_advisory.id,
                 "advisory_type": last_advisory.advisory_type,
                 "message": last_advisory.message,
+                "severity": last_advisory.severity,
                 "confidence": last_advisory.confidence,
                 "generated_at": last_advisory.generated_at
             } if last_advisory else None,
-            "last_weather": None
+            "last_weather": {
+                "temp_mean": last_weather.temperature_mean,
+                "humidity": last_weather.humidity,
+                "rainfall": last_weather.rainfall,
+                "source": last_weather.source,
+            } if last_weather else None,
         })
-    
+
     return result
+
 
 @router.get("/regional-stats")
 async def get_regional_stats(
@@ -64,74 +88,100 @@ async def get_regional_stats(
     """Get aggregated statistics for a region."""
     farmer_query = db.query(models.Farmer)
     farm_query = db.query(models.Farm)
-    
+
     if district:
         farmer_query = farmer_query.filter(models.Farmer.district == district)
-        farm_query = farm_query.join(models.Farmer).filter(
-            models.Farmer.district == district
-        )
-    
+        farm_query = farm_query.join(models.Farmer).filter(models.Farmer.district == district)
     if crop:
         farm_query = farm_query.filter(models.Farm.crop_name == crop)
-    
+
     total_farmers = farmer_query.count()
     total_farms = farm_query.count()
-    
-    # Active advisories (issued in last 7 days)
+
     one_week_ago = datetime.utcnow() - timedelta(days=7)
     active_advisories = db.query(func.count(models.Advisory.id)).filter(
         models.Advisory.generated_at >= one_week_ago
     ).scalar()
-    
-    # Advisory type distribution
+
     type_dist = db.query(
         models.Advisory.advisory_type,
         func.count(models.Advisory.id)
     ).group_by(models.Advisory.advisory_type).all()
-    
-    # Feedback metrics
+
     feedbacks = db.query(models.AdvisoryFeedback).all()
     if feedbacks:
         helpful = sum(1 for f in feedbacks if f.feedback_type == "helpful")
         engagement_rate = (helpful / len(feedbacks) * 100)
     else:
         engagement_rate = 0
-    
+
+    total_msgs = db.query(func.count(models.Message.id)).scalar() or 0
+    sent_msgs = db.query(func.count(models.Message.id)).filter(
+        models.Message.status.in_(["sent", "delivered"])
+    ).scalar() or 0
+    sms_delivery_rate = round((sent_msgs / total_msgs * 100) if total_msgs > 0 else 0, 1)
+
     return {
         "total_farms": total_farms,
         "total_farmers": total_farmers,
         "active_advisories_count": active_advisories,
         "avg_engagement_rate": round(engagement_rate, 2),
         "advisory_type_distribution": dict(type_dist),
+        "sms_delivery_rate": sms_delivery_rate,
         "district": district,
         "crop": crop
     }
 
-@router.get("/farm/{farm_id}/timeline")
-async def get_farm_timeline(
-    farm_id: int,
-    days: int = 30,
-    db: Session = Depends(get_db)
-):
-    """Get timeline of advisories and weather for a farm."""
+
+@router.get("/advisory-trend")
+async def advisory_trend(days: int = 14, db: Session = Depends(get_db)):
+    """Daily advisory count for the past N days — for frontend trend chart."""
     since = datetime.utcnow() - timedelta(days=days)
-    
+    advisories = db.query(models.Advisory).filter(models.Advisory.generated_at >= since).all()
+
+    counts: dict = defaultdict(int)
+    for adv in advisories:
+        day = adv.generated_at.strftime("%Y-%m-%d")
+        counts[day] += 1
+
+    result = []
+    for i in range(days - 1, -1, -1):
+        day = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+        result.append({"date": day, "count": counts.get(day, 0)})
+
+    return {"trend": result, "days": days}
+
+
+@router.get("/farm/{farm_id}/timeline")
+async def get_farm_timeline(farm_id: int, days: int = 30, db: Session = Depends(get_db)):
+    """Full timeline of advisories, weather, and messages for a farm."""
+    since = datetime.utcnow() - timedelta(days=days)
+
+    farm = db.query(models.Farm).filter(models.Farm.id == farm_id).first()
+    if not farm:
+        raise HTTPException(status_code=404, detail="Farm not found")
+
+    farmer = farm.farmer
+
     advisories = db.query(models.Advisory).filter(
-        and_(
-            models.Advisory.farm_id == farm_id,
-            models.Advisory.generated_at >= since
-        )
+        and_(models.Advisory.farm_id == farm_id, models.Advisory.generated_at >= since)
     ).order_by(models.Advisory.generated_at).all()
-    
+
     forecast = db.query(models.WeatherForecast).filter(
-        and_(
-            models.WeatherForecast.farm_id == farm_id,
-            models.WeatherForecast.forecast_date >= since
-        )
+        and_(models.WeatherForecast.farm_id == farm_id, models.WeatherForecast.forecast_date >= since)
     ).order_by(models.WeatherForecast.forecast_date).all()
-    
+
+    messages = []
+    if farmer:
+        messages = db.query(models.Message).filter(
+            and_(models.Message.farmer_id == farmer.id, models.Message.created_at >= since)
+        ).order_by(models.Message.created_at.desc()).limit(20).all()
+
     return {
         "farm_id": farm_id,
+        "farm_name": farm.farm_name,
+        "crop_name": farm.crop_name,
+        "farmer_name": farmer.name if farmer else None,
         "days": days,
         "advisories": [
             {
@@ -139,6 +189,9 @@ async def get_farm_timeline(
                 "type": a.advisory_type,
                 "message": a.message,
                 "severity": a.severity,
+                "confidence": a.confidence,
+                "generated_by": a.generated_by,
+                "shap_explanation": a.shap_explanation,
                 "generated_at": a.generated_at
             } for a in advisories
         ],
@@ -146,30 +199,36 @@ async def get_farm_timeline(
             {
                 "date": w.forecast_date,
                 "temp_mean": w.temperature_mean,
+                "temp_min": w.temperature_min,
+                "temp_max": w.temperature_max,
                 "humidity": w.humidity,
-                "rainfall": w.rainfall
+                "rainfall": w.rainfall,
+                "source": w.source,
             } for w in forecast
+        ],
+        "messages": [
+            {
+                "id": m.id,
+                "channel": m.channel,
+                "content": m.content[:80],
+                "status": m.status,
+                "sent_at": m.sent_at,
+            } for m in messages
         ]
     }
 
+
 @router.get("/broadcast/{message_id}")
 async def get_broadcast(message_id: int, db: Session = Depends(get_db)):
-    """Get broadcast message details."""
-    msg = db.query(models.BroadcastMessage).filter(
-        models.BroadcastMessage.id == message_id
-    ).first()
-    
+    msg = db.query(models.BroadcastMessage).filter(models.BroadcastMessage.id == message_id).first()
     if not msg:
         raise HTTPException(status_code=404, detail="Broadcast not found")
-    
     return {
-        "id": msg.id,
-        "content": msg.content,
-        "target_region": msg.target_region,
-        "target_crop": msg.target_crop,
-        "sent_at": msg.sent_at,
-        "created_at": msg.created_at
+        "id": msg.id, "content": msg.content,
+        "target_region": msg.target_region, "target_crop": msg.target_crop,
+        "sent_at": msg.sent_at, "created_at": msg.created_at
     }
+
 
 @router.post("/broadcast")
 async def create_broadcast(
@@ -179,29 +238,48 @@ async def create_broadcast(
     user_id: int = None,
     db: Session = Depends(get_db)
 ):
-    """Create a broadcast message from extension officer."""
-    
-    # Verify user exists (would be from JWT auth in production)
+    """Create and queue a broadcast message to all matching farmers."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     broadcast = models.BroadcastMessage(
         sender_id=user_id,
         content=content,
         target_region=target_region,
         target_crop=target_crop,
-        scheduled_send_at=None  # Send immediately
+        scheduled_send_at=None
     )
-    
     db.add(broadcast)
     db.commit()
     db.refresh(broadcast)
-    
-    # TODO: Trigger async job to send to all matching farmers
-    
+
+    query = db.query(models.Farmer).filter(
+        models.Farmer.district == target_region,
+        models.Farmer.is_active == True,
+        models.Farmer.consented_advisory == True
+    )
+    if target_crop:
+        query = query.join(models.Farm).filter(models.Farm.crop_name == target_crop)
+
+    farmers = query.all()
+    queued = 0
+    for farmer in farmers:
+        try:
+            from app.tasks import send_sms_task
+            send_sms_task.delay(
+                farmer_id=farmer.id,
+                message_text=content[:160],
+                phone_number=farmer.phone,
+                language=farmer.preferred_language or "en"
+            )
+            queued += 1
+        except Exception:
+            pass
+
     return {
         "id": broadcast.id,
         "created_at": broadcast.created_at,
-        "target_region": target_region
+        "target_region": target_region,
+        "farmers_queued": queued
     }

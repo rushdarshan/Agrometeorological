@@ -73,6 +73,26 @@ services:
       - ./frontend/src:/app/src
     command: npm start
 
+  # Celery Worker — async SMS dispatch and advisory generation
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: agriculture_celery
+    environment:
+      ENV: development
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/agriculture_db
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: celery -A celery_worker worker --loglevel=info -Q sms,advisories --concurrency=2
+    restart: unless-stopped
+
   # Nginx Reverse Proxy (optional, for production-like setup)
   nginx:
     image: nginx:alpine

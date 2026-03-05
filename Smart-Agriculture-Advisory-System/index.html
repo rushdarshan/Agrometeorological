@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Agriculture Advisory System</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --green-dark:   #1a5f3d;
+      --green:        #2d7c3e;
+      --green-light:  #e8f5ee;
+      --amber:        #f59e0b;
+      --red:          #ef4444;
+      --blue:         #3b82f6;
+      --text:         #1f2937;
+      --text-muted:   #6b7280;
+      --border:       #e5e7eb;
+      --white:        #ffffff;
+      --bg:           #f0fdf4;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* === SIDEBAR === */
+    .sidebar {
+      position: fixed; top:0; left:0; height:100vh; width:220px;
+      background: var(--green-dark);
+      display: flex; flex-direction: column;
+      z-index: 100;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-logo {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-logo h2 { color:#fff; font-size:15px; line-height:1.4; }
+    .sidebar-logo span { color:rgba(255,255,255,0.5); font-size:11px; }
+    .nav-item {
+      display: flex; align-items: center; gap:12px;
+      padding: 13px 20px;
+      color: rgba(255,255,255,0.75);
+      cursor: pointer; font-size:13px; font-weight:500;
+      transition: all 0.2s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background:rgba(255,255,255,0.1); color:#fff; }
+    .nav-item.active {
+      background: rgba(255,255,255,0.15); color:#fff;
+      border-left-color: #6ee7b7;
+    }
+    .nav-icon { font-size:18px; }
+    .sidebar-footer {
+      margin-top:auto; padding:16px 20px;
+      border-top:1px solid rgba(255,255,255,0.1);
+      color:rgba(255,255,255,0.4); font-size:11px;
+    }
+    #healthDot {
+      display:inline-block; width:8px; height:8px;
+      border-radius:50%; background:#6b7280; margin-right:5px;
+    }
+    #healthDot.ok { background:#6ee7b7; }
+
+    /* === MAIN AREA === */
+    .main { margin-left:220px; padding:28px 32px; min-height:100vh; }
+
+    .page-header {
+      margin-bottom:24px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .page-header h1 { font-size:22px; font-weight:700; color:var(--green-dark); }
+    .page-header p  { font-size:13px; color:var(--text-muted); margin-top:2px; }
+
+    /* === CARDS === */
+    .cards-row {
+      display:grid; grid-template-columns: repeat(4,1fr); gap:16px; margin-bottom:24px;
+    }
+    @media (max-width:1100px) { .cards-row { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:600px)  { .cards-row { grid-template-columns: 1fr; } }
+
+    .card {
+      background:var(--white); border-radius:10px; padding:20px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.07); border:1px solid var(--border);
+    }
+    .card-label {
+      font-size:11px; font-weight:600; text-transform:uppercase;
+      letter-spacing:0.5px; color:var(--text-muted); margin-bottom:8px;
+    }
+    .card-value {
+      font-size:32px; font-weight:800; color:var(--green-dark); line-height:1;
+    }
+    .card-sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
+    .card-icon {
+      float:right; font-size:28px; margin-top:-4px; opacity:0.6;
+    }
+
+    /* === CHART GRID === */
+    .charts-row {
+      display:grid; grid-template-columns: 1fr 2fr; gap:16px; margin-bottom:24px;
+    }
+    @media (max-width:900px) { .charts-row { grid-template-columns:1fr; } }
+
+    .chart-card {
+      background:var(--white); border-radius:10px; padding:20px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.07); border:1px solid var(--border);
+    }
+    .chart-card h3 {
+      font-size:13px; font-weight:600; color:var(--green-dark); margin-bottom:16px;
+      padding-bottom:10px; border-bottom:1px solid var(--border);
+    }
+    canvas { max-width:100%; }
+
+    /* === TABLE === */
+    .table-card {
+      background:var(--white); border-radius:10px; padding:20px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.07); border:1px solid var(--border);
+      margin-bottom:24px;
+    }
+    .table-card h3 {
+      font-size:13px; font-weight:600; color:var(--green-dark); margin-bottom:16px;
+      padding-bottom:10px; border-bottom:1px solid var(--border);
+    }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th {
+      text-align:left; padding:9px 12px; background:var(--green-light);
+      color:var(--green-dark); font-weight:600; font-size:12px;
+    }
+    td { padding:9px 12px; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#f9fafb; cursor:pointer; }
+
+    /* severity badges */
+    .badge {
+      display:inline-block; padding:2px 8px; border-radius:99px;
+      font-size:11px; font-weight:600;
+    }
+    .badge-high   { background:#fee2e2; color:#991b1b; }
+    .badge-medium { background:#fef3c7; color:#92400e; }
+    .badge-low    { background:#d1fae5; color:#065f46; }
+    .badge-blue   { background:#dbeafe; color:#1e40af; }
+
+    /* === MAP === */
+    #farmMap { width:100%; height:420px; border-radius:8px; }
+
+    /* === FORM === */
+    .form-card {
+      background:var(--white); border-radius:10px; padding:24px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.07); border:1px solid var(--border);
+      margin-bottom:24px;
+    }
+    .form-card h3 {
+      font-size:14px; font-weight:600; color:var(--green-dark); margin-bottom:18px;
+      padding-bottom:10px; border-bottom:1px solid var(--border);
+    }
+    .form-grid {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+      gap:14px; margin-bottom:14px;
+    }
+    .form-group { display:flex; flex-direction:column; }
+    label {
+      font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text);
+    }
+    input, select, textarea {
+      padding:9px 11px; border:1px solid var(--border);
+      border-radius:6px; font-size:13px; color:var(--text);
+      transition:border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline:none; border-color:var(--green);
+      box-shadow:0 0 0 3px rgba(45,124,62,0.12);
+    }
+    .checkbox-row { display:flex; gap:18px; margin-top:10px; }
+    .checkbox-row label {
+      display:flex; align-items:center; gap:6px;
+      font-weight:normal; font-size:13px; cursor:pointer;
+    }
+
+    .btn {
+      padding:10px 22px; border-radius:6px; font-weight:600;
+      font-size:13px; cursor:pointer; border:none; transition:all 0.2s;
+    }
+    .btn-primary   { background:var(--green); color:#fff; }
+    .btn-primary:hover   { background:var(--green-dark); }
+    .btn-secondary { background:var(--white); color:var(--green); border:1px solid var(--green); }
+    .btn-secondary:hover { background:var(--green-light); }
+    .btn-amber { background:var(--amber); color:#fff; }
+    .btn-amber:hover { filter:brightness(0.9); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+
+    .msg { padding:12px 16px; border-radius:6px; margin-bottom:12px; font-size:13px; }
+    .msg-success { background:#d1fae5; color:#065f46; border-left:3px solid #059669; }
+    .msg-error   { background:#fee2e2; color:#991b1b; border-left:3px solid #ef4444; }
+    .msg-info    { background:#dbeafe; color:#1e40af; border-left:3px solid #3b82f6; }
+
+    /* === MODAL === */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.5); z-index:1000;
+      align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:#fff; border-radius:12px; padding:28px;
+      max-width:700px; width:90%; max-height:85vh; overflow-y:auto;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px;
+    }
+    .modal-header h2 { font-size:16px; color:var(--green-dark); }
+    .close-btn {
+      background:none; border:none; font-size:22px;
+      cursor:pointer; color:var(--text-muted); line-height:1;
+    }
+    .close-btn:hover { color:var(--text); }
+
+    .advisory-item {
+      border-left:3px solid var(--green); padding:10px 14px;
+      background:#f9faf9; margin-bottom:8px; border-radius:4px;
+    }
+
+    .weather-row {
+      display:flex; gap:12px; overflow-x:auto; padding-bottom:6px;
+    }
+    .weather-day {
+      min-width:80px; text-align:center; background:var(--green-light);
+      border-radius:8px; padding:10px 8px; font-size:12px;
+    }
+    .weather-day .wdate { font-weight:600; font-size:11px; color:var(--green-dark); }
+    .weather-day .wtemp { font-size:15px; font-weight:700; color:var(--green-dark); margin:4px 0; }
+
+    .shap-bar { margin:3px 0; }
+    .shap-label { font-size:11px; color:var(--text-muted); }
+    .shap-bg { background:#e5e7eb; border-radius:99px; height:5px; margin-top:2px; }
+    .shap-fill { height:5px; border-radius:99px; background:var(--green); }
+
+    /* === LOADING SPINNER === */
+    .spinner {
+      display:inline-block; width:14px; height:14px;
+      border:2px solid #e5e7eb; border-top-color:var(--green);
+      border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* tab pages */
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* ML Result */
+    .crop-result-grid {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px;
+    }
+    .crop-result-item {
+      text-align:center; padding:14px; background:var(--green-light);
+      border-radius:8px; border:2px solid transparent;
+    }
+    .crop-result-item.top { border-color:var(--green); }
+    .crop-name { font-weight:700; font-size:15px; color:var(--green-dark); }
+    .crop-conf { font-size:12px; color:var(--text-muted); margin-top:3px; }
+    .conf-bar  { height:4px; background:#e5e7eb; border-radius:99px; margin-top:6px; }
+    .conf-fill { height:4px; background:var(--green); border-radius:99px; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h2>Smart Agriculture Advisory System</h2>
+    <span>v2.0 Dashboard</span>
+  </div>
+
+  <div class="nav-item active" onclick="showPage('overview',this)">
+    <span class="nav-icon">📊</span> Overview
+  </div>
+  <div class="nav-item" onclick="showPage('farms',this)">
+    <span class="nav-icon">🌾</span> Farms
+  </div>
+  <div class="nav-item" onclick="showPage('map',this)">
+    <span class="nav-icon">🗺️</span> Map View
+  </div>
+  <div class="nav-item" onclick="showPage('predict',this)">
+    <span class="nav-icon">🤖</span> ML Predict
+  </div>
+  <div class="nav-item" onclick="showPage('generate',this)">
+    <span class="nav-icon">⚡</span> Auto-Generate
+  </div>
+  <div class="nav-item" onclick="showPage('register',this)">
+    <span class="nav-icon">➕</span> Register Farmer
+  </div>
+  <div class="nav-item" onclick="showPage('manual',this)">
+    <span class="nav-icon">📢</span> Manual Advisory
+  </div>
+
+  <div class="sidebar-footer">
+    <span id="healthDot"></span>
+    <span id="healthText">Checking...</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ========== OVERVIEW ========== -->
+  <div id="page-overview" class="page active">
+    <div class="page-header">
+      <div>
+        <h1>Overview Dashboard</h1>
+        <p>Real-time agrometeorological advisory statistics</p>
+      </div>
+      <button class="btn btn-secondary" onclick="loadOverview()">↻ Refresh</button>
+    </div>
+
+    <div class="cards-row" id="statsCards">
+      <div class="card"><div class="card-label">Total Farms</div><div class="card-value" id="statFarms">--</div><div class="card-sub">Active registrations</div><span class="card-icon">🌾</span></div>
+      <div class="card"><div class="card-label">Farmers</div><div class="card-value" id="statFarmers">--</div><div class="card-sub">Registered users</div><span class="card-icon">👨‍🌾</span></div>
+      <div class="card"><div class="card-label">Advisories (7d)</div><div class="card-value" id="statAdv">--</div><div class="card-sub">Active in last 7 days</div><span class="card-icon">📢</span></div>
+      <div class="card"><div class="card-label">SMS Delivery</div><div class="card-value" id="statSMS">--</div><div class="card-sub">Delivery rate</div><span class="card-icon">📱</span></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Advisory Type Distribution</h3>
+        <canvas id="donutChart" height="240"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Advisory Trend — Last 14 Days</h3>
+        <canvas id="trendChart" height="140"></canvas>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>SMS Delivery Breakdown</h3>
+        <canvas id="smsChart" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Engagement Rate</h3>
+        <canvas id="engageChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== FARMS ========== -->
+  <div id="page-farms" class="page">
+    <div class="page-header">
+      <div><h1>Farm Directory</h1><p>All registered farms and latest advisories</p></div>
+      <button class="btn btn-secondary" onclick="loadFarms()">↻ Refresh</button>
+    </div>
+    <div class="table-card">
+      <h3>Farms List</h3>
+      <div id="farmTableWrap"><span class="spinner"></span> Loading...</div>
+    </div>
+  </div>
+
+  <!-- ========== MAP ========== -->
+  <div id="page-map" class="page">
+    <div class="page-header"><div><h1>Farm Map</h1><p>Geographic overview with advisory severity pins</p></div></div>
+    <div class="chart-card">
+      <h3>Farm Locations — click a pin for details</h3>
+      <div id="farmMap"></div>
+    </div>
+    <div style="margin-top:12px; font-size:12px; color:var(--text-muted);">
+      Pin colors: <span style="color:#ef4444">■</span> High severity &nbsp;
+      <span style="color:#f59e0b">■</span> Medium &nbsp;
+      <span style="color:#22c55e">■</span> Low / No advisory
+    </div>
+  </div>
+
+  <!-- ========== ML PREDICT ========== -->
+  <div id="page-predict" class="page">
+    <div class="page-header"><div><h1>ML Crop Recommendation</h1><p>Random Forest model — 99% accuracy on 2,200 crop samples</p></div></div>
+    <div class="form-card">
+      <h3>Enter Soil &amp; Climate Parameters</h3>
+      <div id="mlModelStatus"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Nitrogen (N) kg/ha</label><input type="number" id="ml_N" value="90" min="0" max="200"></div>
+        <div class="form-group"><label>Phosphorus (P) kg/ha</label><input type="number" id="ml_P" value="42" min="0" max="200"></div>
+        <div class="form-group"><label>Potassium (K) kg/ha</label><input type="number" id="ml_K" value="43" min="0" max="250"></div>
+        <div class="form-group"><label>Temperature °C</label><input type="number" id="ml_temp" value="21" step="0.1"></div>
+        <div class="form-group"><label>Humidity %</label><input type="number" id="ml_hum" value="82" min="0" max="100"></div>
+        <div class="form-group"><label>Soil pH</label><input type="number" id="ml_ph" value="6.5" step="0.1" min="0" max="14"></div>
+        <div class="form-group"><label>Rainfall mm (annual)</label><input type="number" id="ml_rain" value="202" min="0" max="500"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runMLPredict()">🤖 Predict Best Crop</button>
+        <button class="btn btn-secondary" onclick="checkModelStatus()">Check Model Status</button>
+      </div>
+    </div>
+
+    <div id="mlResult" style="display:none">
+      <div class="form-card">
+        <h3>Prediction Results</h3>
+        <div id="mlResultContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== AUTO-GENERATE ========== -->
+  <div id="page-generate" class="page">
+    <div class="page-header">
+      <div><h1>Auto-Generate Advisories</h1><p>Trigger rule engine + ML for a farm or all farms</p></div>
+    </div>
+    <div class="form-card">
+      <h3>Generate for Specific Farm</h3>
+      <div id="genMsg"></div>
+      <div class="form-grid" style="max-width:400px">
+        <div class="form-group">
+          <label>Farm ID</label>
+          <input type="number" id="gen_farm_id" value="1" min="1">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="autoGenerate()">⚡ Generate for Farm</button>
+        <button class="btn btn-amber" onclick="autoGenerateAll()">⚡⚡ Generate for ALL Farms</button>
+      </div>
+    </div>
+    <div id="genResult" style="display:none">
+      <div class="table-card">
+        <h3>Generated Advisories</h3>
+        <div id="genResultContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== REGISTER ========== -->
+  <div id="page-register" class="page">
+    <div class="page-header"><div><h1>Register New Farmer</h1><p>Add farmer to the advisory system</p></div></div>
+    <div class="form-card">
+      <h3>Farmer &amp; Farm Details</h3>
+      <div id="regMsg"></div>
+      <form onsubmit="registerFarmer(event)">
+        <div class="form-grid">
+          <div class="form-group"><label>Phone *</label><input type="tel" id="r_phone" placeholder="+919876543210" required></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="r_name" required></div>
+          <div class="form-group"><label>Village *</label><input type="text" id="r_village" required></div>
+          <div class="form-group"><label>District *</label><input type="text" id="r_district" value="Kaira" required></div>
+          <div class="form-group"><label>State *</label><input type="text" id="r_state" value="Gujarat" required></div>
+          <div class="form-group"><label>Crop *</label>
+            <select id="r_crop">
+              <option>Rice</option><option>Wheat</option><option>Maize</option>
+              <option>Cotton</option><option>Groundnut</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Area (hectares) *</label><input type="number" id="r_area" placeholder="1.5" step="0.5" required></div>
+          <div class="form-group"><label>Latitude *</label><input type="number" id="r_lat" placeholder="22.3707" step="0.0001" required></div>
+          <div class="form-group"><label>Longitude *</label><input type="number" id="r_lon" placeholder="72.3694" step="0.0001" required></div>
+          <div class="form-group"><label>Sowing Date *</label><input type="date" id="r_sow" required></div>
+          <div class="form-group"><label>Language</label>
+            <select id="r_lang">
+              <option value="en">English</option>
+              <option value="hi">Hindi</option>
+              <option value="gu">Gujarati</option>
+              <option value="mr">Marathi</option>
+            </select>
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="r_consent1" required> Consent to receive advisories via SMS</label>
+          <label><input type="checkbox" id="r_consent2" required> Consent to data use for improving advisories</label>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary">Register Farmer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== MANUAL ADVISORY ========== -->
+  <div id="page-manual" class="page">
+    <div class="page-header"><div><h1>Manual Advisory</h1><p>Create a targeted advisory for a specific farm</p></div></div>
+    <div class="form-card">
+      <h3>Advisory Details</h3>
+      <div id="manMsg"></div>
+      <form onsubmit="createManualAdvisory(event)">
+        <div class="form-grid">
+          <div class="form-group"><label>Farm ID *</label><input type="number" id="m_farm" value="1" required></div>
+          <div class="form-group"><label>Advisory Type *</label>
+            <select id="m_type">
+              <option value="irrigation">Irrigation</option>
+              <option value="sowing">Sowing</option>
+              <option value="pest_alert">Pest Alert</option>
+              <option value="fertilization">Fertilization</option>
+              <option value="disease_alert">Disease Alert</option>
+              <option value="frost_warning">Frost Warning</option>
+              <option value="heat_stress">Heat Stress</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Severity *</label>
+            <select id="m_sev">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Confidence (0–1) *</label><input type="number" id="m_conf" value="0.75" step="0.05" min="0" max="1"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1"><label>Message *</label><textarea id="m_msg" rows="2" required></textarea></div>
+          <div class="form-group" style="grid-column:1/-1"><label>Reasoning *</label><textarea id="m_reason" rows="2" required></textarea></div>
+        </div>
+        <div class="btn-row"><button type="submit" class="btn btn-primary">Create Advisory</button></div>
+      </form>
+    </div>
+
+    <div id="manHistory" style="display:none">
+      <div class="table-card">
+        <h3>Advisory History — Farm <span id="manFarmId">1</span></h3>
+        <div id="manHistoryContent"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FARM DETAIL MODAL -->
+<div class="modal-overlay" id="farmModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Farm Details</h2>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const API = '';  // same-origin; change to 'http://localhost:8000' if opening file directly
+
+// =====================================================================
+// NAVIGATION
+// =====================================================================
+let mapInitialized = false;
+let leafletMap = null;
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+
+  if (name === 'overview') loadOverview();
+  if (name === 'farms')    loadFarms();
+  if (name === 'map')      loadMap();
+  if (name === 'predict')  checkModelStatus();
+}
+
+// =====================================================================
+// HEALTH CHECK
+// =====================================================================
+async function checkHealth() {
+  try {
+    const res = await fetch(API + '/health');
+    if (res.ok) {
+      const d = await res.json();
+      document.getElementById('healthDot').className = 'ok';
+      document.getElementById('healthText').textContent = 'API online' + (d.ml_model_ready ? ' · ML ready' : '');
+    }
+  } catch {
+    document.getElementById('healthText').textContent = 'API offline';
+  }
+}
+
+// =====================================================================
+// CHART INSTANCES
+// =====================================================================
+let donutChart, trendChart, smsChart, engageChart;
+
+function destroyChart(c) { if (c) c.destroy(); }
+
+// =====================================================================
+// OVERVIEW
+// =====================================================================
+async function loadOverview() {
+  try {
+    const [stats, trend, sms] = await Promise.all([
+      fetch(API + '/api/dashboard/regional-stats').then(r => r.json()),
+      fetch(API + '/api/dashboard/advisory-trend?days=14').then(r => r.json()),
+      fetch(API + '/api/weather/delivery-stats').then(r => r.json()),
+    ]);
+
+    document.getElementById('statFarms').textContent   = stats.total_farms ?? '--';
+    document.getElementById('statFarmers').textContent = stats.total_farmers ?? '--';
+    document.getElementById('statAdv').textContent     = stats.active_advisories_count ?? '--';
+    document.getElementById('statSMS').textContent     = (sms.delivery_rate_percent ?? 0) + '%';
+
+    // Donut chart — advisory type distribution
+    const typeData = stats.advisory_type_distribution || {};
+    const typeLabels = Object.keys(typeData).map(k => k.replace(/_/g,' '));
+    const typeVals   = Object.values(typeData);
+    const COLORS = ['#2d7c3e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
+
+    destroyChart(donutChart);
+    donutChart = new Chart(document.getElementById('donutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: typeLabels.length ? typeLabels : ['No advisories yet'],
+        datasets: [{ data: typeVals.length ? typeVals : [1], backgroundColor: COLORS, borderWidth: 2 }]
+      },
+      options: {
+        plugins: { legend: { position:'bottom', labels:{ font:{size:11}, boxWidth:12 } } },
+        cutout: '60%'
+      }
+    });
+
+    // Trend line chart
+    const trendData = (trend.trend || []);
+    destroyChart(trendChart);
+    trendChart = new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: trendData.map(t => t.date.slice(5)),
+        datasets: [{
+          label: 'Advisories',
+          data: trendData.map(t => t.count),
+          borderColor: '#2d7c3e', backgroundColor: 'rgba(45,124,62,0.1)',
+          fill: true, tension: 0.4, pointRadius: 3
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero:true, ticks:{stepSize:1} },
+          x: { ticks:{ font:{size:10} } }
+        },
+        plugins: { legend: { display:false } }
+      }
+    });
+
+    // SMS bar chart
+    destroyChart(smsChart);
+    smsChart = new Chart(document.getElementById('smsChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Pending','Sent','Delivered','Failed'],
+        datasets: [{
+          data: [sms.pending||0, sms.sent||0, sms.delivered||0, sms.failed||0],
+          backgroundColor: ['#94a3b8','#3b82f6','#22c55e','#ef4444'],
+          borderRadius: 5
+        }]
+      },
+      options: {
+        plugins: { legend: { display:false } },
+        scales: { y:{ beginAtZero:true } }
+      }
+    });
+
+    // Engagement doughnut
+    const eng = stats.avg_engagement_rate || 0;
+    destroyChart(engageChart);
+    engageChart = new Chart(document.getElementById('engageChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Engaged','Not engaged'],
+        datasets: [{ data: [eng, 100-eng], backgroundColor:['#2d7c3e','#e5e7eb'], borderWidth:0 }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: {
+          legend: { display:false },
+          tooltip: { callbacks: { label: ctx => ctx.raw.toFixed(1)+'%' } }
+        }
+      }
+    });
+
+  } catch(e) { console.error('Overview error:', e); }
+}
+
+// =====================================================================
+// FARMS TABLE
+// =====================================================================
+async function loadFarms() {
+  const wrap = document.getElementById('farmTableWrap');
+  wrap.innerHTML = '<span class="spinner"></span> Loading farms...';
+  try {
+    const farms = await fetch(API + '/api/dashboard/farms?limit=50').then(r => r.json());
+    if (!farms.length) { wrap.innerHTML = '<p style="color:var(--text-muted)">No farms found</p>'; return; }
+
+    const rows = farms.map(f => {
+      const sev = f.last_advisory?.severity || 'none';
+      const badgeCls = sev==='high'?'badge-high': sev==='medium'?'badge-medium':'badge-low';
+      const advText = f.last_advisory ? `<span class="badge ${badgeCls}">${sev}</span> ${f.last_advisory.advisory_type?.replace(/_/g,' ')}` : '<span style="color:var(--text-muted)">—</span>';
+      const wx = f.last_weather ? `${f.last_weather.temp_mean?.toFixed(0)}°C / ${f.last_weather.humidity?.toFixed(0)}% RH` : '—';
+      return `<tr onclick="openFarmModal(${f.id})">
+        <td><strong>${f.farm_name}</strong><br><span style="font-size:11px;color:var(--text-muted)">${f.farmer_name}</span></td>
+        <td>${f.crop_name}</td>
+        <td>${f.village}, ${f.district}</td>
+        <td>${f.area_hectares} ha</td>
+        <td>${advText}</td>
+        <td>${wx}</td>
+      </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `<table>
+      <thead><tr><th>Farm / Farmer</th><th>Crop</th><th>Location</th><th>Area</th><th>Last Advisory</th><th>Weather</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  } catch(e) {
+    wrap.innerHTML = `<div class="msg msg-error">Error loading farms: ${e.message}</div>`;
+  }
+}
+
+// =====================================================================
+// MAP VIEW
+// =====================================================================
+async function loadMap() {
+  if (!mapInitialized) {
+    leafletMap = L.map('farmMap').setView([22.37, 72.37], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors', maxZoom:18
+    }).addTo(leafletMap);
+    mapInitialized = true;
+  }
+
+  leafletMap.eachLayer(l => { if (l instanceof L.Marker) leafletMap.removeLayer(l); });
+
+  try {
+    const farms = await fetch(API + '/api/dashboard/farms?limit=100').then(r => r.json());
+    farms.forEach(f => {
+      if (!f.lat || !f.lon) return;
+      const sev = f.last_advisory?.severity;
+      const color = sev==='high' ? '#ef4444' : sev==='medium' ? '#f59e0b' : '#22c55e';
+      const icon = L.divIcon({
+        html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+        className:'', iconSize:[14,14], iconAnchor:[7,7]
+      });
+      L.marker([f.lat, f.lon], {icon})
+        .addTo(leafletMap)
+        .bindPopup(`<strong>${f.farm_name}</strong><br>
+          Crop: ${f.crop_name}<br>
+          Farmer: ${f.farmer_name}<br>
+          ${f.last_advisory ? `<span style="color:${color}">Advisory: ${f.last_advisory.advisory_type?.replace(/_/g,' ')} (${f.last_advisory.severity})</span>` : 'No advisories'}
+        `)
+        .on('click', () => openFarmModal(f.id));
+    });
+    setTimeout(() => leafletMap.invalidateSize(), 200);
+  } catch(e) { console.error('Map error:', e); }
+}
+
+// =====================================================================
+// FARM MODAL
+// =====================================================================
+async function openFarmModal(farmId) {
+  document.getElementById('farmModal').classList.add('open');
+  document.getElementById('modalTitle').textContent = 'Loading...';
+  document.getElementById('modalContent').innerHTML = '<span class="spinner"></span>';
+
+  try {
+    const [timeline, weather] = await Promise.all([
+      fetch(API + `/api/dashboard/farm/${farmId}/timeline?days=30`).then(r => r.json()),
+      fetch(API + `/api/weather/farm/${farmId}/forecast`).then(r => r.json()).catch(()=>({records:[]}))
+    ]);
+
+    document.getElementById('modalTitle').textContent = `${timeline.farm_name} — ${timeline.crop_name}`;
+
+    // Weather forecast row
+    const wxHtml = weather.records.length
+      ? `<div class="weather-row">${weather.records.map(w => `
+          <div class="weather-day">
+            <div class="wdate">${w.date.slice(5)}</div>
+            <div class="wtemp">${w.temp_mean}°C</div>
+            <div>${w.humidity}%</div>
+            <div>${w.rainfall}mm</div>
+          </div>`).join('')}</div>`
+      : '<p style="color:var(--text-muted);font-size:13px">No forecast data. Click "Fetch Weather" to load.</p>';
+
+    // Advisory list
+    const advHtml = timeline.advisories.length
+      ? timeline.advisories.slice().reverse().map(a => {
+          const shapHtml = a.shap_explanation
+            ? `<div style="margin-top:8px">${Object.entries(a.shap_explanation).sort((x,y)=>Math.abs(y[1])-Math.abs(x[1])).slice(0,4).map(([k,v]) => {
+                const w = Math.min(100, Math.abs(v)*200);
+                return `<div class="shap-bar"><span class="shap-label">${k}: ${v>0?'+':''}${v.toFixed(3)}</span><div class="shap-bg"><div class="shap-fill" style="width:${w}%"></div></div></div>`;
+              }).join('')}</div>`
+            : '';
+          const sev = a.severity||'low';
+          return `<div class="advisory-item">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="badge ${sev==='high'?'badge-high':sev==='medium'?'badge-medium':'badge-low'}">${sev}</span>
+              <span style="font-size:11px;color:var(--text-muted)">${a.generated_at?.slice(0,10)} · ${a.generated_by}</span>
+            </div>
+            <div style="margin-top:6px;font-size:13px"><strong>${a.type?.replace(/_/g,' ')}</strong> — ${a.message}</div>
+            ${shapHtml}
+          </div>`;
+        }).join('')
+      : '<p style="color:var(--text-muted);font-size:13px">No advisories in last 30 days.</p>';
+
+    document.getElementById('modalContent').innerHTML = `
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Farmer: <strong>${timeline.farmer_name||'—'}</strong></p>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:8px">7-DAY FORECAST</div>
+        ${wxHtml}
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:600;color:var(--green-dark)">ADVISORIES (LAST 30 DAYS)</span>
+          <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="fetchWeatherAndGenerate(${farmId})">⚡ Fetch Weather + Generate</button>
+        </div>
+        ${advHtml}
+      </div>
+
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:8px">SMS MESSAGES</div>
+        ${timeline.messages.length
+          ? timeline.messages.map(m=>`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)">
+              <span class="badge ${m.status==='delivered'?'badge-low':m.status==='failed'?'badge-high':'badge-blue'}">${m.status}</span>
+              ${m.content} <span style="color:var(--text-muted)">${m.sent_at?.slice(0,10)||''}</span>
+            </div>`).join('')
+          : '<p style="color:var(--text-muted);font-size:13px">No messages sent.</p>'}
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('modalContent').innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+  }
+}
+
+async function fetchWeatherAndGenerate(farmId) {
+  try {
+    const res = await fetch(API + `/api/advisories/generate/${farmId}`, {method:'POST'});
+    const data = await res.json();
+    openFarmModal(farmId); // reload
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function closeModal() {
+  document.getElementById('farmModal').classList.remove('open');
+}
+document.getElementById('farmModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('farmModal')) closeModal();
+});
+
+// =====================================================================
+// ML PREDICT
+// =====================================================================
+async function checkModelStatus() {
+  const el = document.getElementById('mlModelStatus');
+  try {
+    const d = await fetch(API + '/api/predict/model-status').then(r => r.json());
+    if (d.model_available) {
+      el.innerHTML = `<div class="msg msg-success">Model ready · ${d.model_type} · Accuracy: ${(d.accuracy*100).toFixed(1)}% · ${d.n_classes} crops</div>`;
+    } else {
+      el.innerHTML = `<div class="msg msg-error">Model not trained. Run: <code>python -m app.model_trainer</code> in your project directory.</div>`;
+    }
+  } catch {
+    el.innerHTML = `<div class="msg msg-info">Could not reach /api/predict/model-status</div>`;
+  }
+}
+
+async function runMLPredict() {
+  const payload = {
+    N: +document.getElementById('ml_N').value,
+    P: +document.getElementById('ml_P').value,
+    K: +document.getElementById('ml_K').value,
+    temperature: +document.getElementById('ml_temp').value,
+    humidity: +document.getElementById('ml_hum').value,
+    ph: +document.getElementById('ml_ph').value,
+    rainfall: +document.getElementById('ml_rain').value,
+    top_n: 3
+  };
+  try {
+    const res = await fetch(API + '/api/predict/crop', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Prediction failed');
+
+    const cropCards = data.top_predictions.map((p, i) => `
+      <div class="crop-result-item ${i===0?'top':''}">
+        <div class="crop-name">${p.crop}</div>
+        <div class="crop-conf">${(p.confidence*100).toFixed(1)}%</div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${p.confidence*100}%"></div></div>
+        ${i===0 ? '<div style="font-size:11px;color:var(--green);margin-top:4px">RECOMMENDED</div>':''}
+      </div>`).join('');
+
+    const shapHtml = data.shap_explanation
+      ? `<div style="margin-top:18px"><div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:10px">FEATURE IMPORTANCE (SHAP)</div>
+          ${Object.entries(data.shap_explanation).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).map(([k,v])=>{
+            const w = Math.min(100, Math.abs(v)*300);
+            const col = v >= 0 ? 'var(--green)' : 'var(--red)';
+            return `<div class="shap-bar">
+              <span class="shap-label">${k}: <strong style="color:${col}">${v>0?'+':''}${v.toFixed(3)}</strong></span>
+              <div class="shap-bg"><div class="shap-fill" style="width:${w}%;background:${col}"></div></div>
+            </div>`;
+          }).join('')}</div>`
+      : '';
+
+    document.getElementById('mlResultContent').innerHTML = `
+      <div class="crop-result-grid">${cropCards}</div>
+      ${shapHtml}
+    `;
+    document.getElementById('mlResult').style.display = 'block';
+  } catch(e) {
+    document.getElementById('mlModelStatus').innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+  }
+}
+
+// =====================================================================
+// AUTO-GENERATE
+// =====================================================================
+async function autoGenerate() {
+  const farmId = +document.getElementById('gen_farm_id').value;
+  const msg = document.getElementById('genMsg');
+  msg.innerHTML = `<div class="msg msg-info"><span class="spinner"></span> Generating advisories for farm ${farmId}...</div>`;
+  try {
+    const res = await fetch(API + `/api/advisories/generate/${farmId}`, {method:'POST'});
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail);
+
+    msg.innerHTML = `<div class="msg msg-success">Generated ${data.advisories_generated} advisories · Crop stage: ${data.crop_stage} · Weather: ${data.weather_source}</div>`;
+
+    if (data.advisories?.length) {
+      const rows = data.advisories.map(a => `<tr>
+        <td>${a.advisory_type?.replace(/_/g,' ')}</td>
+        <td><span class="badge ${a.severity==='high'?'badge-high':a.severity==='medium'?'badge-medium':'badge-low'}">${a.severity}</span></td>
+        <td>${(a.confidence*100).toFixed(0)}%</td>
+        <td>${a.message}</td>
+        <td><span class="badge badge-blue">${a.generated_by}</span></td>
+      </tr>`).join('');
+
+      document.getElementById('genResultContent').innerHTML = `<table>
+        <thead><tr><th>Type</th><th>Severity</th><th>Confidence</th><th>Message</th><th>Source</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+      document.getElementById('genResult').style.display = 'block';
+    } else {
+      document.getElementById('genResultContent').innerHTML = '<p style="color:var(--text-muted)">No rules triggered for current conditions.</p>';
+      document.getElementById('genResult').style.display = 'block';
+    }
+  } catch(e) {
+    msg.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+  }
+}
+
+async function autoGenerateAll() {
+  const msg = document.getElementById('genMsg');
+  msg.innerHTML = `<div class="msg msg-info"><span class="spinner"></span> Triggering advisory generation for all active farms...</div>`;
+  try {
+    const res = await fetch(API + '/api/advisories/generate-all', {method:'POST'});
+    const data = await res.json();
+    msg.innerHTML = `<div class="msg msg-success">Queued: ${data.queued} farms · Skipped: ${data.skipped}</div>`;
+  } catch(e) {
+    msg.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+  }
+}
+
+// =====================================================================
+// REGISTER FARMER
+// =====================================================================
+async function registerFarmer(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registering...';
+  const msg = document.getElementById('regMsg');
+  try {
+    const payload = {
+      phone: document.getElementById('r_phone').value,
+      name: document.getElementById('r_name').value,
+      village: document.getElementById('r_village').value,
+      district: document.getElementById('r_district').value,
+      state: document.getElementById('r_state').value,
+      crop_name: document.getElementById('r_crop').value,
+      area_hectares: +document.getElementById('r_area').value,
+      latitude: +document.getElementById('r_lat').value,
+      longitude: +document.getElementById('r_lon').value,
+      sowing_date: document.getElementById('r_sow').value + 'T00:00:00',
+      consented_advisory: document.getElementById('r_consent1').checked,
+      consented_data_use: document.getElementById('r_consent2').checked,
+      preferred_language: document.getElementById('r_lang').value
+    };
+    const res = await fetch(API + '/api/auth/register', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.innerHTML = `<div class="msg msg-success">Farmer registered! ID: ${data.id}</div>`;
+      e.target.reset();
+    } else {
+      msg.innerHTML = `<div class="msg msg-error">${data.detail}</div>`;
+    }
+  } catch(e2) {
+    msg.innerHTML = `<div class="msg msg-error">${e2.message}</div>`;
+  } finally {
+    btn.disabled=false; btn.innerHTML='Register Farmer';
+  }
+}
+
+// =====================================================================
+// MANUAL ADVISORY
+// =====================================================================
+async function createManualAdvisory(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Creating...';
+  const msg = document.getElementById('manMsg');
+  const farmId = +document.getElementById('m_farm').value;
+  try {
+    const payload = {
+      farm_id: farmId,
+      advisory_type: document.getElementById('m_type').value,
+      severity: document.getElementById('m_sev').value,
+      confidence: +document.getElementById('m_conf').value,
+      title: document.getElementById('m_msg').value.substring(0,80),
+      message: document.getElementById('m_msg').value,
+      reasoning: document.getElementById('m_reason').value,
+      generated_by: 'rule_engine'
+    };
+    const res = await fetch(API + '/api/advisories/advisory', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.innerHTML = `<div class="msg msg-success">Advisory created! ID: ${data.id}</div>`;
+      document.getElementById('manFarmId').textContent = farmId;
+      loadManualHistory(farmId);
+      document.getElementById('manHistory').style.display='block';
+    } else {
+      msg.innerHTML = `<div class="msg msg-error">${data.detail}</div>`;
+    }
+  } catch(e2) {
+    msg.innerHTML = `<div class="msg msg-error">${e2.message}</div>`;
+  } finally {
+    btn.disabled=false; btn.innerHTML='Create Advisory';
+  }
+}
+
+async function loadManualHistory(farmId) {
+  try {
+    const data = await fetch(API + `/api/advisories/farm/${farmId}`).then(r => r.json());
+    const rows = data.map(a => `<tr>
+      <td>${a.advisory_type?.replace(/_/g,' ')}</td>
+      <td><span class="badge ${a.severity==='high'?'badge-high':a.severity==='medium'?'badge-medium':'badge-low'}">${a.severity}</span></td>
+      <td>${(a.confidence*100).toFixed(0)}%</td>
+      <td>${a.message}</td>
+      <td>${a.generated_at?.slice(0,10)}</td>
+    </tr>`).join('');
+    document.getElementById('manHistoryContent').innerHTML =
+      rows ? `<table><thead><tr><th>Type</th><th>Severity</th><th>Conf.</th><th>Message</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`
+           : '<p style="color:var(--text-muted)">No advisories yet.</p>';
+  } catch {}
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+window.addEventListener('load', () => {
+  checkHealth();
+  loadOverview();
+  setInterval(loadOverview, 60000);
+  setInterval(checkHealth, 30000);
+});
+</script>
+</body>
+</html>
