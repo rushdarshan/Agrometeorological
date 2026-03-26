@@ -1,0 +1,43 @@
+"use client"
+
+import { useState } from "react"
+import { Sidebar } from "@/components/sidebar"
+import { Dashboard } from "@/components/dashboard"
+import { MyFarm } from "@/components/my-farm"
+import { Advisories } from "@/components/advisories"
+import { Profile } from "@/components/profile"
+import { RegisterFarmerModal } from "@/components/register-farmer-modal"
+
+export default function Home() {
+  const [activeView, setActiveView] = useState<"dashboard" | "farm" | "advisories" | "profile">("dashboard")
+  const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>()
+  const [showRegister, setShowRegister] = useState(false)
+
+  const navigateToFarm = (farmId?: number) => {
+    setSelectedFarmId(farmId)
+    setActiveView("farm")
+  }
+
+  return (
+    <div className="flex h-screen bg-background">
+      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      <main className="flex-1 overflow-auto">
+        {activeView === "dashboard" && (
+          <Dashboard
+            onNavigateToFarm={navigateToFarm}
+            onAddFarmer={() => setShowRegister(true)}
+          />
+        )}
+        {activeView === "farm"        && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}
+        {activeView === "advisories"  && <Advisories />}
+        {activeView === "profile"     && <Profile />}
+      </main>
+      {showRegister && (
+        <RegisterFarmerModal
+          onClose={() => setShowRegister(false)}
+          onSuccess={() => setShowRegister(false)}
+        />
+      )}
+    </div>
+  )
+}
