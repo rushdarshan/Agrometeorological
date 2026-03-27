@@ -44,9 +44,9 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
 
   return (
     <TooltipProvider>
-      <aside className="w-20 bg-sidebar flex flex-col items-center pt-6 pb-4 gap-4 border-r border-border">
+      <aside className="w-20 bg-sidebar flex flex-col items-center py-6 gap-4 border-r border-border">
         {/* Logo */}
-        <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center mb-6">
+        <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center mb-8">
           <Sprout className="w-7 h-7 text-primary-foreground" />
         </div>
 
