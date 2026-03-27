@@ -40,8 +40,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-background">
-      {/* Desktop sidebar - hidden on mobile */}
-      <div className="hidden md:flex md:flex-col">
+      {/* Desktop sidebar - hidden on mobile, with padding */}
+      <div className="hidden md:flex md:flex-col md:flex-shrink-0">
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
       </div>
 
