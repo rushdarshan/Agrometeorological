@@ -163,15 +163,11 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Summary Stats - Improved Layout */}
+      <div className="space-y-8">
+        {/* Primary Stat - Featured */}
         {statsLoading ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
+          <StatCardSkeleton />
         ) : statsError ? (
           <div className="md:col-span-4">
             <Card className="border-destructive/50 bg-destructive/5">
@@ -188,26 +184,38 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
           </div>
         ) : (
           <>
-            <StatCard
-              title="Total Advisories"
-              value={stats?.active_advisories_count || 0}
-              variant="default"
-            />
-            <StatCard
-              title="High Priority"
-              value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
-              variant="destructive"
-            />
-            <StatCard
-              title="Medium Priority"
-              value={Math.ceil((stats?.active_advisories_count || 0) * 0.4)}
-              variant="accent"
-            />
-            <StatCard
-              title="Low Priority"
-              value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
-              variant="default"
-            />
+            {/* Main advisory count - larger, more prominent */}
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 to-primary/0">
+              <CardContent className="pt-8 pb-8">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Total Active Advisories</p>
+                    <p className="text-5xl font-bold text-primary">{stats?.active_advisories_count || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-3">Out of {stats?.active_advisories_count || 0} total alerts</p>
+                  </div>
+                  <AlertCircle className="w-16 h-16 text-primary/20" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Secondary stats - grid of 3 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard
+                title="High Priority"
+                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
+                variant="destructive"
+              />
+              <StatCard
+                title="Medium Priority"
+                value={Math.ceil((stats?.active_advisories_count || 0) * 0.4)}
+                variant="accent"
+              />
+              <StatCard
+                title="Low Priority"
+                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
+                variant="default"
+              />
+            </div>
           </>
         )}
       </div>
