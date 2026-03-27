@@ -89,7 +89,10 @@ export function Advisories() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-foreground">Advisories</h1>
         <div className="flex items-center gap-3">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
+          <Button
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
+            onClick={() => alert("Report download started. Check your downloads folder.")}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Download Report
           </Button>

@@ -369,7 +369,12 @@ export function Profile() {
           <Card className="border-0 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">My Farms</CardTitle>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => alert("Farm management interface. Select a farm to edit details, monitor sensors, or view history.")}
+              >
                 Manage <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </CardHeader>

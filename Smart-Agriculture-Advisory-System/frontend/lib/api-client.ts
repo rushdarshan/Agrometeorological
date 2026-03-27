@@ -21,24 +21,33 @@ import { API_CONFIG, QUERY_KEYS } from "./constants"
 
 async function apiFetch<T>(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
+  timeoutMs: number = 10000
 ): Promise<T> {
   const url = `${API_CONFIG.baseUrl}${path}`
 
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    ...options,
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(errorText || `HTTP ${response.status}`)
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+      ...options,
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(errorText || `HTTP ${response.status}`)
+    }
+
+    return response.json()
+  } finally {
+    clearTimeout(timeoutId)
   }
-
-  return response.json()
 }
 
 // ── Dashboard API ────────────────────────────────────────────────────────
