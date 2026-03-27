@@ -103,7 +103,7 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                aria-label="Notifications"
+                aria-label="Notifications (You have unread notifications)"
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 relative"
               >
                 <Bell className="w-5 h-5" />

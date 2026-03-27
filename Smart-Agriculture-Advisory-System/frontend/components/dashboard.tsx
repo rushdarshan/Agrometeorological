@@ -458,6 +458,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                     <Button
                       size="sm"
                       variant="outline"
+                      aria-label="Previous month"
                       onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -465,6 +466,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                     <Button
                       size="sm"
                       variant="outline"
+                      aria-label="Next month"
                       onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
                     >
                       <ChevronRight className="w-4 h-4" />
