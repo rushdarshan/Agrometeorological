@@ -130,7 +130,7 @@ export async function fetchHealth(): Promise<HealthCheckResponse> {
  */
 export function useDashboardStats(
   district: string,
-  options?: Omit<UseQueryOptions, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<RegionalStats>, "queryKey" | "queryFn">
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.regionalStats(district),

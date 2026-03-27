@@ -75,6 +75,17 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
   const { data: stats, isLoading: statsLoading, isError: statsError } = useDashboardStats(selectedDistrict)
   const { data: farms = [], isLoading: farmsLoading, isError: farmsError } = useFarms(selectedDistrict, 6)
 
+  // Default stats in case API returns undefined
+  const defaultStats: RegionalStats = {
+    total_farms: 0,
+    total_farmers: 0,
+    active_advisories_count: 0,
+    avg_engagement_rate: 0,
+    advisory_type_distribution: {},
+    sms_delivery_rate: 0,
+  }
+  const safeStats: RegionalStats = stats || defaultStats
+
   // Load farmer name from props or first farm owner (demo)
   useEffect(() => {
     if (userName) {
@@ -122,7 +133,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
     id: 999,
     title: "Regional Advisory",
     location: `${selectedDistrict} district`,
-    date: `${stats?.active_advisories_count || 0} active advisories`,
+    date: `${safeStats.active_advisories_count} active advisories`,
     status: "Active",
     statusColor: "bg-primary text-primary-foreground",
   }]);
@@ -132,7 +143,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
         id: f.id,
         name: f.farm_name,
         type: f.crop_name,
-        harvest: f.last_advisory ? `Advisory: ${f.last_advisory.advisory_type.replace(/_/g, " ")}` : `${f.village}`,
+        harvest: f.last_advisory?.advisory_type ? `Advisory: ${f.last_advisory.advisory_type.replace(/_/g, " ")}` : `${f.village}`,
         size: `${f.area_hectares} ha`,
         health: 0.7 + (Math.random() * 0.3),
         color: fieldColors[i % 3],
@@ -192,8 +203,8 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-2">Total Active Advisories</p>
-                    <p className="text-5xl font-bold text-primary">{stats?.active_advisories_count || 0}</p>
-                    <p className="text-xs text-muted-foreground mt-3">Out of {stats?.active_advisories_count || 0} total alerts</p>
+                    <p className="text-5xl font-bold text-primary">{safeStats.active_advisories_count}</p>
+                    <p className="text-xs text-muted-foreground mt-3">Out of {safeStats.active_advisories_count} total alerts</p>
                   </div>
                   <AlertCircle className="w-16 h-16 text-primary/20" />
                 </div>
@@ -204,17 +215,17 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard
                 title="High Priority"
-                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
+                value={Math.ceil(safeStats.active_advisories_count * 0.3)}
                 variant="destructive"
               />
               <StatCard
                 title="Medium Priority"
-                value={Math.ceil((stats?.active_advisories_count || 0) * 0.4)}
+                value={Math.ceil(safeStats.active_advisories_count * 0.4)}
                 variant="accent"
               />
               <StatCard
                 title="Low Priority"
-                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
+                value={Math.ceil(safeStats.active_advisories_count * 0.3)}
                 variant="default"
               />
             </div>
