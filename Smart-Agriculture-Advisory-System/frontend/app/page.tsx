@@ -8,6 +8,7 @@ import { Advisories } from "@/components/advisories"
 import { Profile } from "@/components/profile"
 import { RegisterFarmerModal } from "@/components/register-farmer-modal"
 import { MobileNav } from "@/components/mobile-nav"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { useFarms } from "@/lib/api-client"
 
 export default function Home() {
@@ -47,19 +48,21 @@ export default function Home() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto flex flex-col">
-        {activeView === "dashboard" && (
-          <Dashboard
-            onNavigateToFarm={navigateToFarm}
-            onAddFarmer={() => setShowRegister(true)}
-            onViewAllTasks={handleViewAllTasks}
-            onViewAllFields={handleViewAllFields}
-            userDistrict="Kaira"
-            userName="Ramesh Patel"
-          />
-        )}
-        {activeView === "farm"        && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}
-        {activeView === "advisories"  && <Advisories />}
-        {activeView === "profile"     && <Profile />}
+        <ErrorBoundary>
+          {activeView === "dashboard" && (
+            <Dashboard
+              onNavigateToFarm={navigateToFarm}
+              onAddFarmer={() => setShowRegister(true)}
+              onViewAllTasks={handleViewAllTasks}
+              onViewAllFields={handleViewAllFields}
+              userDistrict="Kaira"
+              userName="Ramesh Patel"
+            />
+          )}
+          {activeView === "farm"        && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}
+          {activeView === "advisories"  && <Advisories />}
+          {activeView === "profile"     && <Profile />}
+        </ErrorBoundary>
 
         {/* Mobile bottom navigation - visible only on mobile */}
         <MobileNav activeView={activeView} setActiveView={setActiveView} />
