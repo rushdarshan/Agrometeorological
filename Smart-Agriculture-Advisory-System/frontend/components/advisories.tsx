@@ -21,16 +21,7 @@ import {
 import { useAdvisories } from "@/lib/api-client"
 import { SkeletonLoader } from "@/components/shared/skeleton-loader"
 import { ADVISORY_TYPES, SEVERITY_LEVELS, CROPS } from "@/lib/constants"
-import type { Advisory } from "@/lib/types"
-
-interface AdvisoryFilters {
-  crop?: string
-  severity?: "low" | "medium" | "high"
-  startDate?: string
-  endDate?: string
-  status?: "new" | "read" | "implemented"
-  sortBy?: "newest" | "oldest" | "severity"
-}
+import type { Advisory, AdvisoryFilters } from "@/lib/types"
 
 export function Advisories() {
   const [page, setPage] = useState(0)

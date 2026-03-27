@@ -197,8 +197,11 @@ export interface FarmFilters {
 export interface AdvisoryFilters {
   severity?: AdvisorySeverity
   advisoryType?: AdvisoryType
+  crop?: string
   startDate?: string
   endDate?: string
+  status?: "new" | "read" | "implemented"
+  sortBy?: "newest" | "oldest" | "severity"
   searchTerm?: string
 }
 
