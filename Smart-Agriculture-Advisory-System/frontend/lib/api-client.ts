@@ -16,6 +16,10 @@ import {
   PaginatedResponse,
 } from "./types"
 import { API_CONFIG, QUERY_KEYS, TIMEOUTS } from "./constants"
+import { DEMO_STATS, DEMO_FARMS, DEMO_ADVISORIES, DEMO_WEATHER } from "./demo-data"
+
+// Check if demo mode is enabled
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
 // ── Base Fetch Function ──────────────────────────────────────────────────
 
@@ -46,6 +50,14 @@ async function apiFetch<T>(
 
     return response.json()
   } catch (error) {
+    // In demo mode, return demo data as fallback
+    if (DEMO_MODE) {
+      console.warn('📊 Using demo data (API unavailable)')
+      // Return empty object which will be handled by component logic
+      // Components will check for demo mode and use demo data directly
+      return {} as T
+    }
+    
     // Distinguish timeout errors from other fetch errors
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Request timeout after ${timeoutMs}ms`)
@@ -140,7 +152,13 @@ export function useDashboardStats(
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.regionalStats(district),
-    queryFn: () => fetchRegionalStats(district),
+    queryFn: async () => {
+      if (DEMO_MODE) {
+        console.info('📊 Loading demo statistics')
+        return DEMO_STATS
+      }
+      return fetchRegionalStats(district)
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: API_CONFIG.retryAttempts,
     ...options,
@@ -157,7 +175,13 @@ export function useFarms(
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.farms(district, limit),
-    queryFn: () => fetchFarms(district, limit),
+    queryFn: async () => {
+      if (DEMO_MODE) {
+        console.info('🌾 Loading demo farms')
+        return DEMO_FARMS
+      }
+      return fetchFarms(district, limit)
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: API_CONFIG.retryAttempts,
     ...options,
@@ -190,7 +214,14 @@ export function useAdvisoryTrend(
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.advisoryTrend(days),
-    queryFn: () => fetchAdvisoryTrend(days),
+    queryFn: async () => {
+      if (DEMO_MODE) {
+        console.info('📋 Loading demo advisory trend')
+        // Calculate trend from demo advisories
+        return { advisory_count: DEMO_ADVISORIES.length, trend_percentage: 12.5 }
+      }
+      return fetchAdvisoryTrend(days)
+    },
     staleTime: 15 * 60 * 1000, // 15 minutes
     retry: API_CONFIG.retryAttempts,
     ...options,
@@ -223,7 +254,13 @@ export function useForecast(
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.forecast(farmId, days),
-    queryFn: () => fetchStoredForecast(farmId, days),
+    queryFn: async () => {
+      if (DEMO_MODE) {
+        console.info('🌤️ Loading demo weather forecast')
+        return { farm_id: farmId, records: DEMO_WEATHER.slice(0, days) }
+      }
+      return fetchStoredForecast(farmId, days)
+    },
     staleTime: 60 * 60 * 1000, // 1 hour
     retry: 2,
     ...options,
@@ -240,7 +277,13 @@ export function useAdvisories(
 ) {
   return useQuery({
     queryKey: QUERY_KEYS.advisories(limit, skip),
-    queryFn: () => fetchAdvisories(limit, skip),
+    queryFn: async () => {
+      if (DEMO_MODE) {
+        console.info('📢 Loading demo advisories')
+        return DEMO_ADVISORIES.slice(skip, skip + limit)
+      }
+      return fetchAdvisories(limit, skip)
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: API_CONFIG.retryAttempts,
     ...options,
