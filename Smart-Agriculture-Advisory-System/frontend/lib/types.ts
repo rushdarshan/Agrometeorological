@@ -81,12 +81,13 @@ export interface FarmWeather {
 // ── Advisory Types ───────────────────────────────────────────────────────
 
 export type AdvisorySeverity = "low" | "medium" | "high"
-export type AdvisoryType = "irrigation" | "pest" | "disease" | "harvest" | "weather" | "soil"
+export type AdvisoryType = "irrigation" | "pest" | "disease" | "harvest" | "weather" | "soil" | string
 
 export interface Advisory {
   id: number
   farm_id: number
-  advisory_type: AdvisoryType
+  advisory_type?: AdvisoryType | string
+  type?: string
   severity: AdvisorySeverity
   confidence: number
   title?: string

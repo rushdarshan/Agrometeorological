@@ -247,16 +247,21 @@ export function MyFarm({ onBack, farmId }: MyFarmProps) {
                 <SkeletonLoader type="card" count={3} />
               ) : advisories.length > 0 ? (
                 <div className="space-y-3">
-                  {advisories.slice(0, 5).map((advisory: Advisory) => (
+                  {advisories.slice(0, 5).map((advisory: any) => (
                     <div key={advisory.id} className="flex items-start justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-medium text-foreground capitalize">{advisory.advisory_type.replace(/_/g, " ")}</h4>
+                          <h4 className="font-medium text-foreground capitalize">
+                            {(advisory.advisory_type || advisory.type || "Advisory")
+                              .toString()
+                              .replace(/_/g, " ")
+                              .toLowerCase()}
+                          </h4>
                           <Badge
                             variant={advisory.severity === "high" ? "destructive" : advisory.severity === "medium" ? "secondary" : "default"}
                             className="rounded-full"
                           >
-                            {advisory.severity}
+                            {advisory.severity || "medium"}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">{advisory.message}</p>
