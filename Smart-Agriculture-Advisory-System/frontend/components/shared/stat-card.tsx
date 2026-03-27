@@ -64,9 +64,9 @@ export function StatCard({
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <CardTitle className={clsx("text-sm font-medium", titleVariantStyles[variant])}>
+          <CardTitle className={clsx("text-base font-semibold", titleVariantStyles[variant])}>
             {title}
           </CardTitle>
           {icon && <div className="text-muted-foreground">{icon}</div>}

@@ -33,3 +33,76 @@ INFO:     127.0.0.1:64805 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
 INFO:     127.0.0.1:64805 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
 {"timestamp": "2026-03-27T14:22:00.509046", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.015s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
 INFO:     127.0.0.1:65230 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:09.911487", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/regional-stats status=200 duration=0.004s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:61746 - "OPTIONS /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:09.913953", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/farms status=200 duration=0.006s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:59642 - "OPTIONS /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:09.934980", "level": "INFO", "logger": "app.routers.dashboard", "message": "Regional stats calculated: advisories=9, delivery_rate=0%", "module": "dashboard", "function": "get_regional_stats", "line": 153}
+{"timestamp": "2026-03-27T14:27:09.952413", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/regional-stats status=200 duration=0.034s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:27:09.953073", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.032s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:61746 - "GET /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59642 - "GET /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:12.598425", "level": "INFO", "logger": "app.routers.dashboard", "message": "Regional stats calculated: advisories=9, delivery_rate=0%", "module": "dashboard", "function": "get_regional_stats", "line": 153}
+{"timestamp": "2026-03-27T14:27:12.602849", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.037s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:27:12.603918", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/regional-stats status=200 duration=0.039s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:61746 - "GET /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59642 - "GET /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:21.722692", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/regional-stats status=200 duration=0.003s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:27:21.723212", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/farms status=200 duration=0.004s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:57746 - "OPTIONS /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60082 - "OPTIONS /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:22.005879", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.019s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:50351 - "GET /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:22.024257", "level": "INFO", "logger": "app.routers.dashboard", "message": "Regional stats calculated: advisories=9, delivery_rate=0%", "module": "dashboard", "function": "get_regional_stats", "line": 153}
+{"timestamp": "2026-03-27T14:27:22.027070", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/regional-stats status=200 duration=0.014s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:50351 - "GET /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:26.948336", "level": "INFO", "logger": "app.routers.dashboard", "message": "Regional stats calculated: advisories=9, delivery_rate=0%", "module": "dashboard", "function": "get_regional_stats", "line": 153}
+{"timestamp": "2026-03-27T14:27:26.968046", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.042s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:27:26.968598", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/regional-stats status=200 duration=0.045s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:60183 - "GET /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50351 - "GET /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:45.002608", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/farm/0/timeline status=200 duration=0.002s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63383 - "OPTIONS /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:45.013694", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/weather/farm/0 status=200 duration=0.002s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63383 - "OPTIONS /api/weather/farm/0 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:27:45.026098", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.007s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63383 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:45.037743", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.006s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63383 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:46.050970", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.007s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63383 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:46.065998", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.008s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:51988 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:48.075780", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.006s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:51988 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:48.089453", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.005s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:51988 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:27:48.973682", "level": "INFO", "logger": "app.routers.dashboard", "message": "Regional stats calculated: advisories=9, delivery_rate=0%", "module": "dashboard", "function": "get_regional_stats", "line": 153}
+{"timestamp": "2026-03-27T14:27:48.992610", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.035s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:27:48.993197", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/regional-stats status=200 duration=0.037s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63383 - "GET /api/dashboard/farms?district=Kaira&limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51988 - "GET /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:11.992067", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/auth/register status=200 duration=0.003s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:55648 - "OPTIONS /api/auth/register HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:12.073721", "level": "INFO", "logger": "main", "message": "Request completed: POST /api/auth/register status=200 duration=0.072s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:55648 - "POST /api/auth/register HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:18.893899", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/farms status=200 duration=0.002s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:56413 - "OPTIONS /api/dashboard/farms?district=Kaira&limit=10 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:18.914904", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.014s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:56413 - "GET /api/dashboard/farms?district=Kaira&limit=10 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:29.036708", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.033s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:28:29.037750", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.033s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63837 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52177 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:28:29.887705", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/advisories/list status=200 duration=0.001s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:52177 - "OPTIONS /api/advisories/list?limit=10&skip=0 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:29.972026", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/advisories/list status=200 duration=0.068s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:52177 - "GET /api/advisories/list?limit=10&skip=0 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:28:32.030043", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.012s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+{"timestamp": "2026-03-27T14:28:32.030536", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.013s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63837 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52177 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:28:34.151578", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.012s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:52177 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:28:34.157109", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.017s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:63837 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found

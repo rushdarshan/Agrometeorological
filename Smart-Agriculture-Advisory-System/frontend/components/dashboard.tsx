@@ -466,11 +466,11 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                       <div
                         key={i}
                         onClick={() => isCurrentMonth && dayNum && setSelectedDate(dayNum)}
-                        className={`p-2 rounded text-sm transition-colors ${
+                        className={`p-2 rounded text-sm transition-all ${
                           isToday
-                            ? "bg-primary text-primary-foreground font-bold"
+                            ? "bg-primary text-primary-foreground font-bold ring-2 ring-primary"
                             : isSelected
-                            ? "bg-accent text-foreground font-semibold"
+                            ? "bg-secondary border-2 border-primary text-foreground font-semibold"
                             : isCurrentMonth
                             ? "hover:bg-muted cursor-pointer"
                             : "text-muted-foreground opacity-50"

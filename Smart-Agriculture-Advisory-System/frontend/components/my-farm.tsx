@@ -43,8 +43,8 @@ export function MyFarm({ onBack, farmId }: MyFarmProps) {
     village: timeline?.farm_name ? "Village" : "",
   })
 
-  // Fallback if no farmId
-  if (!farmId) {
+  // Fallback if no farmId and still loading
+  if (!farmId && !timelineLoading) {
     return (
       <div className="p-6 lg:p-8">
         <div className="flex items-center gap-4 mb-8">
