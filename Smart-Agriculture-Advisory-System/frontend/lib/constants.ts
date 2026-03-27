@@ -165,6 +165,7 @@ export const TABLE_CONFIG = {
 // ── Timeouts (ms) ───────────────────────────────────────────────────────
 
 export const TIMEOUTS = {
+  apiRequest: 10000, // 10 seconds for API calls
   toast: 3000,
   debounce: 300,
   throttle: 1000,

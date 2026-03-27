@@ -15,14 +15,14 @@ import {
   HealthCheckResponse,
   PaginatedResponse,
 } from "./types"
-import { API_CONFIG, QUERY_KEYS } from "./constants"
+import { API_CONFIG, QUERY_KEYS, TIMEOUTS } from "./constants"
 
 // ── Base Fetch Function ──────────────────────────────────────────────────
 
 async function apiFetch<T>(
   path: string,
   options?: RequestInit,
-  timeoutMs: number = 10000
+  timeoutMs: number = TIMEOUTS.apiRequest
 ): Promise<T> {
   const url = `${API_CONFIG.baseUrl}${path}`
 
@@ -45,6 +45,12 @@ async function apiFetch<T>(
     }
 
     return response.json()
+  } catch (error) {
+    // Distinguish timeout errors from other fetch errors
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeoutMs}ms`)
+    }
+    throw error
   } finally {
     clearTimeout(timeoutId)
   }
