@@ -16,7 +16,7 @@ import {
   PaginatedResponse,
 } from "./types"
 import { API_CONFIG, QUERY_KEYS, TIMEOUTS } from "./constants"
-import { DEMO_STATS, DEMO_FARMS, DEMO_ADVISORIES, DEMO_WEATHER } from "./demo-data"
+import { DEMO_STATS, DEMO_FARMS, DEMO_ADVISORIES, DEMO_WEATHER, DEMO_FARM_TIMELINES } from "./demo-data"
 
 // Check if demo mode is enabled
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
@@ -71,6 +71,9 @@ async function apiFetch<T>(
 // ── Dashboard API ────────────────────────────────────────────────────────
 
 export async function fetchRegionalStats(district: string): Promise<RegionalStats> {
+  if (DEMO_MODE) {
+    return DEMO_STATS
+  }
   return apiFetch<RegionalStats>(
     `/dashboard/regional-stats?district=${encodeURIComponent(district)}`
   )
@@ -80,6 +83,9 @@ export async function fetchFarms(
   district: string,
   limit: number = 10
 ): Promise<Farm[]> {
+  if (DEMO_MODE) {
+    return DEMO_FARMS.slice(0, limit)
+  }
   return apiFetch<Farm[]>(
     `/dashboard/farms?district=${encodeURIComponent(district)}&limit=${limit}`
   )
@@ -89,10 +95,31 @@ export async function fetchFarmTimeline(
   farmId: number,
   days: number = 30
 ): Promise<FarmTimeline> {
+  if (DEMO_MODE) {
+    return DEMO_FARM_TIMELINES[farmId] || DEMO_FARM_TIMELINES[1]
+  }
   return apiFetch<FarmTimeline>(`/dashboard/farm/${farmId}/timeline?days=${days}`)
 }
 
 export async function fetchAdvisoryTrend(days: number = 14): Promise<AdvisoryTrend> {
+  if (DEMO_MODE) {
+    // Create a simple trend response from demo advisories
+    const advisoryCount = DEMO_ADVISORIES.length
+    return {
+      daily_advisories: Array.from({ length: days }, (_, i) => ({
+        date: new Date(Date.now() - (days - i) * 24 * 60 * 60000).toISOString().split('T')[0],
+        count: Math.floor(advisoryCount * (0.8 + Math.random() * 0.4)),
+      })),
+      advisory_type_distribution: {
+        irrigation: 45,
+        pest: 38,
+        soil: 35,
+        harvest: 22,
+        weather: 16,
+      },
+      total_advisories: advisoryCount,
+    }
+  }
   return apiFetch<AdvisoryTrend>(`/dashboard/advisory-trend?days=${days}`)
 }
 
@@ -101,6 +128,19 @@ export async function fetchAdvisoryTrend(days: number = 14): Promise<AdvisoryTre
 export async function fetchFarmWeather(
   farmId: number
 ): Promise<{ summary: Record<string, number | string>; daily: WeatherForecast[] }> {
+  if (DEMO_MODE) {
+    const weather = DEMO_WEATHER[0]
+    return {
+      summary: {
+        temp_max: weather.temp_max,
+        temp_min: weather.temp_min,
+        humidity: weather.humidity,
+        rainfall: weather.rainfall,
+        wind_speed: weather.wind_speed,
+      },
+      daily: DEMO_WEATHER,
+    }
+  }
   return apiFetch(`/weather/farm/${farmId}`)
 }
 
@@ -108,6 +148,12 @@ export async function fetchStoredForecast(
   farmId: number,
   days: number = 7
 ): Promise<{ farm_id: number; records: WeatherForecast[] }> {
+  if (DEMO_MODE) {
+    return {
+      farm_id: farmId,
+      records: DEMO_WEATHER.slice(0, days),
+    }
+  }
   return apiFetch(`/weather/farm/${farmId}/forecast?days=${days}`)
 }
 
@@ -117,6 +163,9 @@ export async function fetchAdvisories(
   limit: number = 20,
   skip: number = 0
 ): Promise<Advisory[]> {
+  if (DEMO_MODE) {
+    return DEMO_ADVISORIES.slice(skip, skip + limit)
+  }
   return apiFetch<Advisory[]>(`/advisories/list?limit=${limit}&skip=${skip}`)
 }
 

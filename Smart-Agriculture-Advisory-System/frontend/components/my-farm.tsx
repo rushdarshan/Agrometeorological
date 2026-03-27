@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,11 +37,23 @@ export function MyFarm({ onBack, farmId }: MyFarmProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState<Partial<Farm>>({
-    farm_name: (timeline as any)?.farm_name || "",
-    crop_name: (timeline as any)?.crop_name || "Rice",
-    area_hectares: (timeline as any)?.farm_name ? 5 : 0,
-    village: (timeline as any)?.farm_name ? "Village" : "",
+    farm_name: "",
+    crop_name: "Cotton",
+    area_hectares: 0,
+    village: "",
   })
+
+  // Update formData when timeline loads
+  useEffect(() => {
+    if (timeline) {
+      setFormData({
+        farm_name: (timeline as any)?.farm_name || "",
+        crop_name: (timeline as any)?.crop_name || "Cotton",
+        area_hectares: (timeline as any)?.farm_name ? 5.5 : 0,
+        village: (timeline as any)?.farm_name ? "Mahisagar Village" : "",
+      })
+    }
+  }, [timeline])
 
   // Fallback if no farmId and still loading
   if (!farmId && !timelineLoading) {
