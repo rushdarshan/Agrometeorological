@@ -124,6 +124,6 @@ export function StatCard({
  * StatCardSkeleton Component
  * Loading skeleton for StatCard
  */
-export function StatCardSkeleton(props?: Partial<StatCardProps>) {
-  return <StatCard {...props} isLoading={true} value={<Skeleton className="h-8 w-32" />} />
+export function StatCardSkeleton({ title = "Loading..." }: { title?: string }) {
+  return <StatCard title={title} isLoading={true} value={<Skeleton className="h-8 w-32" />} />
 }

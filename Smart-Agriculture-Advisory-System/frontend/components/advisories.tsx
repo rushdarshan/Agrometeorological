@@ -1,60 +1,87 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ChevronRight } from "lucide-react"
-import { getRegionalStats, getFarms, type RegionalStats, type FarmSummary } from "@/lib/api"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  AlertCircle,
+  ChevronRight,
+  Plus,
+  ThumbsUp,
+  ThumbsDown,
+  Calendar,
+  Filter,
+  Loader2,
+} from "lucide-react"
+import { useAdvisories } from "@/lib/api-client"
+import { SkeletonLoader } from "@/components/shared/skeleton-loader"
+import { ADVISORY_TYPES, SEVERITY_LEVELS, CROPS } from "@/lib/constants"
+import type { Advisory } from "@/lib/types"
 
-const defaultAdvisoryTypes = [
-  { name: "Irrigation", count: 3 },
-  { name: "Fertilizer", count: 2 },
-  { name: "Pest Control", count: 1 },
-]
+interface AdvisoryFilters {
+  crop?: string
+  severity?: "low" | "medium" | "high"
+  startDate?: string
+  endDate?: string
+  status?: "new" | "read" | "implemented"
+  sortBy?: "newest" | "oldest" | "severity"
+}
 
 export function Advisories() {
-  const [stats, setStats] = useState<RegionalStats | null>(null)
-  const [farms, setFarms] = useState<FarmSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [filters, setFilters] = useState<AdvisoryFilters>({
+    sortBy: "newest",
+  })
+  const [selectedAdvisory, setSelectedAdvisory] = useState<Advisory | null>(null)
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+  const [feedbackMessage, setFeedbackMessage] = useState("")
 
-  useEffect(() => {
-    Promise.all([getRegionalStats("Kaira"), getFarms("Kaira", 20)])
-      .then(([s, f]) => { setStats(s); setFarms(f) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const pageSize = 10
+  const { data: advisories = [], isLoading, isError } = useAdvisories(pageSize, page * pageSize)
 
-  const statsCards = [
-    { label: "Total Farms",       value: stats?.total_farms ?? 12,                        subtext: "ACTIVE REGION",       color: "text-primary" },
-    { label: "Total Farmers",     value: stats?.total_farmers ?? 9,                       subtext: "REGISTERED USERS",    color: "text-primary" },
-    { label: "Active Advisories", value: stats?.active_advisories_count ?? 5,             subtext: "LAST 7 DAYS",         color: "text-primary" },
-    { label: "Engagement Rate",   value: `${stats?.avg_engagement_rate ?? 78}%`,          subtext: "FARMER INTERACTION",  color: "text-accent"  },
-  ]
+  // Filter and sort advisories
+  const filteredAdvisories = useMemo(() => {
+    if (!advisories || !Array.isArray(advisories)) return []
 
-  const advisoryTypes = stats?.advisory_type_distribution
-    ? Object.entries(stats.advisory_type_distribution).map(([name, count]) => ({ name, count }))
-    : defaultAdvisoryTypes
+    let filtered = [...advisories]
 
-  // Derive recent advisories from farms' last_advisory
-  const recentAdvisories = farms
-    .filter(f => f.last_advisory)
-    .slice(0, 6)
-    .map(f => ({
-      id: f.last_advisory!.id,
-      title: f.last_advisory!.advisory_type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-      description: f.last_advisory!.message.slice(0, 100),
-      type: f.last_advisory!.advisory_type,
-      farm: f.farm_name,
-      date: new Date(f.last_advisory!.generated_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-      priority: f.last_advisory!.severity === "high" ? "High" : "Medium",
-    }))
+    // Apply filters
+    if (filters.severity) {
+      filtered = filtered.filter((a) => a.severity === filters.severity)
+    }
 
-  const displayAdvisories = recentAdvisories.length ? recentAdvisories : [
-    { id: 1, title: "Irrigation Schedule Update", description: "Reduce watering frequency due to expected rainfall", type: "Irrigation", farm: "Rice Field Alpha", date: "Mar 5, 2026", priority: "High" },
-    { id: 2, title: "Fertilizer Application",     description: "Apply nitrogen-based fertilizer to wheat plots",  type: "Fertilizer",  farm: "Wheat Plot Beta",  date: "Mar 4, 2026", priority: "Medium" },
-    { id: 3, title: "Pest Alert: Aphids",         description: "Monitor rice fields for aphid infestation",       type: "Pest Control",farm: "Cotton Farm",      date: "Mar 3, 2026", priority: "High" },
-  ]
+    // Sort
+    if (filters.sortBy === "newest") {
+      filtered.sort((a, b) => new Date(b.generated_at || "").getTime() - new Date(a.generated_at || "").getTime())
+    } else if (filters.sortBy === "oldest") {
+      filtered.sort((a, b) => new Date(a.generated_at || "").getTime() - new Date(b.generated_at || "").getTime())
+    } else if (filters.sortBy === "severity") {
+      const severityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 }
+      filtered.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3))
+    }
+
+    return filtered
+  }, [advisories, filters])
+
+  const handleFeedback = async (helpful: boolean) => {
+    try {
+      // In production, use useFeedback mutation
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      setShowFeedbackForm(false)
+      setFeedbackMessage("")
+      setSelectedAdvisory(null)
+      // Show success message
+    } catch (error) {
+      console.error("Failed to submit feedback:", error)
+    }
+  }
+
+  const totalPages = Math.ceil((Array.isArray(advisories) ? advisories.length : 0) / pageSize)
 
   return (
     <div className="p-6 lg:p-8">
@@ -64,7 +91,7 @@ export function Advisories() {
         <div className="flex items-center gap-3">
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
             <Plus className="w-4 h-4 mr-2" />
-            Add
+            Download Report
           </Button>
           <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center">
             <span className="text-lg">👨‍🌾</span>
@@ -72,72 +99,305 @@ export function Advisories() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statsCards.map((stat) => (
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {[
+          { label: "Total Advisories", value: (advisories as any[])?.length || 0, color: "text-primary" },
+          {
+            label: "High Priority",
+            value: (advisories as any[])?.filter((a: Advisory) => a.severity === "high").length || 0,
+            color: "text-destructive",
+          },
+          {
+            label: "Medium Priority",
+            value: (advisories as any[])?.filter((a: Advisory) => a.severity === "medium").length || 0,
+            color: "text-amber-600",
+          },
+          {
+            label: "Low Priority",
+            value: (advisories as any[])?.filter((a: Advisory) => a.severity === "low").length || 0,
+            color: "text-blue-600",
+          },
+        ].map((stat) => (
           <Card key={stat.label} className="border-0 shadow-sm">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
-              <p className={`text-4xl font-bold ${stat.color}`}>{loading ? "…" : stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-2 tracking-wider">{stat.subtext}</p>
+              <p className={`text-4xl font-bold ${stat.color}`}>{isLoading ? "…" : stat.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Advisory Types */}
+      {/* Filters */}
       <Card className="border-0 shadow-sm mb-8">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">By Type</CardTitle>
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            Filters
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {advisoryTypes.map((type) => (
-            <div 
-              key={type.name}
-              className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
-            >
-              <span className="font-medium text-foreground capitalize">{type.name.replace(/_/g, " ")}</span>
-              <Badge className="bg-primary/10 text-primary hover:bg-primary/20 rounded-full">
-                {type.count} active
-              </Badge>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Severity Filter */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Severity</label>
+              <Select
+                value={filters.severity || ""}
+                onValueChange={(value) => setFilters({ ...filters, severity: (value as any) || undefined })}
+              >
+                <SelectTrigger className="rounded-lg">
+                  <SelectValue placeholder="All severities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ))}
+
+            {/* Sort By */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Sort By</label>
+              <Select
+                value={filters.sortBy || "newest"}
+                onValueChange={(value) => setFilters({ ...filters, sortBy: (value as any) })}
+              >
+                <SelectTrigger className="rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="severity">By Severity</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reset Filters */}
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                className="w-full rounded-lg"
+                onClick={() => setFilters({ sortBy: "newest" })}
+              >
+                Reset Filters
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Recent Advisories */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Recent Advisories</CardTitle>
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-            See all <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {displayAdvisories.map((advisory) => (
-            <div 
+      {/* Advisories List */}
+      {isError ? (
+        <Alert variant="destructive" className="mb-8">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Failed to load advisories. Please try again later.</AlertDescription>
+        </Alert>
+      ) : isLoading ? (
+        <SkeletonLoader type="card" count={5} />
+      ) : filteredAdvisories.length > 0 ? (
+        <div className="space-y-4 mb-8">
+          {filteredAdvisories.map((advisory) => (
+            <Card
               key={advisory.id}
-              className="flex items-start justify-between p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
+              className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setSelectedAdvisory(advisory)}
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h4 className="font-medium text-foreground">{advisory.title}</h4>
-                  <Badge variant={advisory.priority === "High" ? "destructive" : "secondary"} className="rounded-full text-xs">
-                    {advisory.priority}
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-medium text-foreground text-lg capitalize">
+                        {advisory.advisory_type.replace(/_/g, " ")}
+                      </h3>
+                      <Badge
+                        variant={
+                          advisory.severity === "high"
+                            ? "destructive"
+                            : advisory.severity === "medium"
+                              ? "secondary"
+                              : "default"
+                        }
+                        className="rounded-full"
+                      >
+                        {advisory.severity}
+                      </Badge>
+                      <Badge variant="outline" className="rounded-full text-xs">
+                        {((advisory.confidence || 0) * 100).toFixed(0)}% confidence
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground mb-3">{advisory.message}</p>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(advisory.generated_at || "").toLocaleDateString()}</span>
+                      </div>
+                      {advisory.generated_by && (
+                        <span className="text-xs bg-muted px-2 py-1 rounded-md">{advisory.generated_by}</span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="pt-12 pb-12 text-center">
+            <p className="text-muted-foreground mb-4">No advisories found matching your filters.</p>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setFilters({ sortBy: "newest" })}
+            >
+              Clear Filters
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <Button
+            variant="outline"
+            disabled={page === 0}
+            onClick={() => setPage(Math.max(0, page - 1))}
+            className="rounded-full"
+          >
+            Previous
+          </Button>
+          <span className="text-muted-foreground text-sm">
+            Page {page + 1} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+            className="rounded-full"
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
+      {/* Advisory Detail Modal */}
+      {selectedAdvisory && (
+        <Dialog open={!!selectedAdvisory} onOpenChange={() => setSelectedAdvisory(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="capitalize">{selectedAdvisory.advisory_type.replace(/_/g, " ")}</DialogTitle>
+              <DialogDescription>Advisory Details & Recommendations</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Advisory Details */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Severity</label>
+                  <Badge
+                    variant={
+                      selectedAdvisory.severity === "high"
+                        ? "destructive"
+                        : selectedAdvisory.severity === "medium"
+                          ? "secondary"
+                          : "default"
+                    }
+                    className="w-fit"
+                  >
+                    {selectedAdvisory.severity}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{advisory.description}</p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="bg-muted px-2 py-1 rounded-md capitalize">{advisory.type.replace(/_/g, " ")}</span>
-                  {"farm" in advisory && <span>{advisory.farm}</span>}
-                  <span>{advisory.date}</span>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Recommendation</label>
+                  <p className="text-foreground leading-relaxed">{selectedAdvisory.message}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Date Generated</label>
+                  <p className="text-muted-foreground">
+                    {new Date(selectedAdvisory.generated_at || "").toLocaleString()}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Confidence Score</label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 bg-secondary rounded-full h-2">
+                      <div
+                        className="bg-primary h-full rounded-full transition-all"
+                        style={{ width: `${(selectedAdvisory.confidence || 0) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-lg font-bold text-primary">
+                      {Math.round((selectedAdvisory.confidence || 0) * 100)}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* SHAP Explanation placeholder */}
+                <div className="bg-secondary/50 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    💡 <strong>How we calculated this:</strong> This advisory was generated based on current weather conditions, crop stage, and
+                    historical patterns for {selectedAdvisory.advisory_type.replace(/_/g, " ")} in your region.
+                  </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+
+              {/* Feedback Section */}
+              <div className="border-t border-border pt-6">
+                <h4 className="font-medium text-foreground mb-4">Was this advisory helpful?</h4>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-lg"
+                    onClick={() => {
+                      setShowFeedbackForm(true)
+                    }}
+                  >
+                    <ThumbsUp className="w-4 h-4 mr-2" />
+                    Helpful
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-lg"
+                    onClick={() => {
+                      setShowFeedbackForm(true)
+                    }}
+                  >
+                    <ThumbsDown className="w-4 h-4 mr-2" />
+                    Not Helpful
+                  </Button>
+                </div>
+
+                {showFeedbackForm && (
+                  <div className="mt-4 p-4 bg-secondary/50 rounded-lg">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Additional Comments (Optional)
+                    </label>
+                    <Input
+                      placeholder="Share your feedback..."
+                      value={feedbackMessage}
+                      onChange={(e) => setFeedbackMessage(e.target.value)}
+                      className="rounded-lg mb-3"
+                    />
+                    <Button
+                      onClick={() => handleFeedback(true)}
+                      className="w-full rounded-lg"
+                    >
+                      Submit Feedback
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

@@ -48,24 +48,24 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer }: DashboardProps) {
   const district = DISTRICTS[0] // Default to first district (Kaira)
   
   // React Query hooks - replace manual state + useEffect
-  const { data: stats, isLoading: statsLoading, isError: statsError } = useDashboardStats(district)
-  const { data: farms, isLoading: farmsLoading, isError: farmsError } = useFarms(district, 6)
+  const { data: stats = {} as any, isLoading: statsLoading, isError: statsError } = useDashboardStats(district)
+  const { data: farms = [], isLoading: farmsLoading, isError: farmsError } = useFarms(district, 6)
 
   // Derived data - computed from React Query results
   const sensorData = {
-    online: stats?.total_farms ?? 0,
+    online: (stats as any)?.total_farms ?? 0,
     lowBattery: 0,
     offline: 0,
   }
 
-  const weatherData = farms?.[0]?.last_weather
+  const weatherData = (farms as any)?.[0]?.last_weather
   
-  const harvestData = stats?.harvest_data ?? {
+  const harvestData = (stats as any)?.harvest_data ?? {
     total: 0,
     crops: []
   }
 
-  const tasks = (farms || []).slice(0, 2).map((f, i) => ({
+  const tasks = ((farms as any) || []).slice(0, 2).map((f: any, i: number) => ({
     id: f.id,
     title: f.last_advisory?.advisory_type ?? (i === 0 ? "Farm Check" : "Monitoring"),
     location: f.farm_name,
@@ -78,13 +78,13 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer }: DashboardProps) {
     id: 999,
     title: "Regional Advisory",
     location: `${district} district`,
-    date: `${stats?.active_advisories_count ?? 0} active advisories`,
+    date: `${(stats as any)?.active_advisories_count ?? 0} active advisories`,
     status: "Active",
     statusColor: "bg-primary text-primary-foreground",
   }])
 
-  const fields = (farms || []).length
-    ? (farms || []).slice(0, 3).map((f, i) => ({
+  const fields = ((farms as any) || []).length
+    ? ((farms as any) || []).slice(0, 3).map((f: any, i: number) => ({
         id: f.id,
         name: f.farm_name,
         type: f.crop_name,
@@ -203,8 +203,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer }: DashboardProps) {
             <StatCard
               title="Harvest"
               value={harvestData.total.toFixed(1)}
-              unit="tonnes"
-              trend={harvestData.crops?.length > 0 ? 12 : 0}
+              description="tonnes harvested"
               variant="default"
             />
           )}

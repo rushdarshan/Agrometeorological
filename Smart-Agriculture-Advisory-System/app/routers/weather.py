@@ -13,7 +13,9 @@ from datetime import datetime
 from app.database import get_db
 from app import schemas, models
 from app.weather_service import fetch_weather_forecast, build_weather_summary, parse_location
+from app.logging_config import get_logger
 
+logger = get_logger(__name__)
 router = APIRouter()
 
 
@@ -168,8 +170,11 @@ async def send_message(
     Queue a message for delivery to a farmer via SMS (and/or push).
     Uses Celery async queue if available; falls back to direct send.
     """
+    logger.debug(f"Sending message to farmer {message_data.farmer_id}")
+    
     farmer = db.query(models.Farmer).filter(models.Farmer.id == message_data.farmer_id).first()
     if not farmer:
+        logger.warning(f"Farmer not found: {message_data.farmer_id}")
         raise HTTPException(status_code=404, detail="Farmer not found")
 
     # Create message record
@@ -187,6 +192,7 @@ async def send_message(
     # Enqueue async SMS via Celery
     try:
         from app.tasks import send_sms_task
+        logger.debug(f"Queueing async SMS task for farmer {farmer.id}")
         send_sms_task.delay(
             farmer_id=farmer.id,
             message_text=message_data.content,
@@ -195,16 +201,24 @@ async def send_message(
             language=farmer.preferred_language or "en",
             db_message_id=msg.id
         )
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Celery not available, falling back to synchronous SMS send: {str(e)}")
         # Celery not available — send synchronously
-        from app.sms_gateway import send_sms
-        result = send_sms(farmer.phone, message_data.content, message_data.advisory_id)
-        msg.status = "sent" if result["success"] else "failed"
-        msg.provider_message_id = result.get("message_sid")
-        msg.error_message = result.get("error") if not result["success"] else None
-        msg.sent_at = datetime.utcnow() if result["success"] else None
-        db.commit()
-        db.refresh(msg)
+        try:
+            from app.sms_gateway import send_sms
+            result = send_sms(farmer.phone, message_data.content, message_data.advisory_id)
+            msg.status = "sent" if result["success"] else "failed"
+            msg.provider_message_id = result.get("message_sid")
+            msg.error_message = result.get("error") if not result["success"] else None
+            msg.sent_at = datetime.utcnow() if result["success"] else None
+            db.commit()
+            db.refresh(msg)
+            logger.info(f"Synchronous SMS sent to farmer {farmer.id}: {'success' if result['success'] else 'failed'}")
+        except Exception as sync_error:
+            logger.error(f"Failed to send SMS synchronously for farmer {farmer.id}: {str(sync_error)}", exc_info=True)
+            msg.status = "failed"
+            msg.error_message = str(sync_error)[:255]
+            db.commit()
 
     return msg
 
