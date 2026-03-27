@@ -10,6 +10,7 @@ import { RegisterFarmerModal } from "@/components/register-farmer-modal"
 import { MobileNav } from "@/components/mobile-nav"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { useFarms } from "@/lib/api-client"
+import { analytics } from "@/lib/analytics"
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "farm" | "advisories" | "profile">("dashboard")
@@ -18,6 +19,16 @@ export default function Home() {
 
   // Fetch farms so user can navigate to them
   const { data: farms = [] } = useFarms("Kaira", 10)
+
+  // Track page view on mount
+  useEffect(() => {
+    analytics.trackPageView("home")
+  }, [])
+
+  // Track view changes
+  useEffect(() => {
+    analytics.trackPageView(`view_${activeView}`)
+  }, [activeView])
 
   // Auto-select first farm on mount
   useEffect(() => {

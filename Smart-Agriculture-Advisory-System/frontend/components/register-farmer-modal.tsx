@@ -13,6 +13,7 @@ import { X, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { useRegisterFarmer } from "@/lib/api-client"
 import { FarmerRegisterSchema, type FarmerRegisterFormData } from "@/lib/validation"
 import { CROPS, DISTRICTS, LANGUAGES } from "@/lib/constants"
+import { analytics } from "@/lib/analytics"
 
 interface RegisterFarmerModalProps {
   onClose: () => void
@@ -64,12 +65,22 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
   const onSubmit = async (data: FarmerRegisterFormData) => {
     try {
       const result = await registerMutation.mutateAsync(data)
+      analytics.trackConversion("farmer_registration", 1, {
+        farmer_id: result.id,
+        farmer_name: result.name,
+        crop_name: data.crop_name,
+        district: data.district,
+      })
       setSuccessMessage(`✓ Farmer "${result.name}" registered successfully! ID: ${result.id}`)
       setTimeout(() => {
         onSuccess?.()
         onClose()
       }, 2000)
     } catch (error) {
+      analytics.trackError("farmer_registration_failed", error instanceof Error ? error.message : "Unknown error", {
+        crop_name: data.crop_name,
+        district: data.district,
+      })
       console.error("Registration failed:", error)
     }
   }
