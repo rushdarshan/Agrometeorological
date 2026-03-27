@@ -191,7 +191,7 @@ export function getFirstError(
   result: z.SafeParseReturnType<unknown, unknown>
 ): string | null {
   if (result.success) return null
-  const errors = result.error.flatten().fieldErrors
+  const errors = result.error.flatten().fieldErrors as Record<string, string[]>
   const firstField = Object.keys(errors)[0]
   return firstField ? errors[firstField]?.[0] ?? null : null
 }

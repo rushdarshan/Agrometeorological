@@ -15,7 +15,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.48 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -28,6 +28,8 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  --trend-up: oklch(0.45 0.15 142);
+  --trend-down: oklch(0.52 0.18 27);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -51,7 +53,7 @@
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.48 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
@@ -64,6 +66,8 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --trend-up: oklch(0.66 0.19 142);
+  --trend-down: oklch(0.7 0.24 27);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -121,5 +125,66 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Micro-interactions and animations */
+@layer components {
+  /* Smooth transitions for interactive elements */
+  button, [role="button"], a, [role="link"] {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* Focus indicator animations */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Button hover/active state with scale */
+  button:hover:not(:disabled) {
+    @apply scale-105;
+  }
+
+  button:active:not(:disabled) {
+    @apply scale-95;
+  }
+
+  /* Loading skeleton animation */
+  @keyframes skeleton-loading {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  .skeleton {
+    animation: skeleton-loading 2s infinite linear;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    background-size: 1000px 100%;
+  }
+
+  /* Success animation */
+  @keyframes success-pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .success-pop {
+    animation: success-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* Slide in from bottom (mobile nav entrance) */
+  @keyframes slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .slide-up {
+    animation: slide-up 0.3s ease-out;
   }
 }

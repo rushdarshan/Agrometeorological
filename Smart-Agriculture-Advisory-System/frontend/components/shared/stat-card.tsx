@@ -54,69 +54,80 @@ export function StatCard({
   onClick,
   actionLabel,
 }: StatCardProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === "Enter" || e.key === " ") && onClick) {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   return (
-    <Card
+    <button
+      {...(onClick ? { role: "button" } : { disabled: true })}
+      type="button"
       className={clsx(
-        "transition-all",
+        "text-left rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all duration-200",
         variantStyles[variant],
-        onClick && "cursor-pointer",
-        className
+        onClick && "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:shadow-lg hover:scale-105 active:scale-95",
+        !onClick && "cursor-default"
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <CardTitle className={clsx("text-base font-semibold", titleVariantStyles[variant])}>
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className={clsx("text-sm md:text-base font-semibold tracking-tight", titleVariantStyles[variant])}>
             {title}
-          </CardTitle>
-          {icon && <div className="text-muted-foreground">{icon}</div>}
+          </h3>
+          {icon && <div className="text-muted-foreground flex-shrink-0">{icon}</div>}
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-2">
-        {/* Value */}
-        <div>
-          {isLoading ? (
-            <Skeleton className="h-8 w-24 rounded-md" />
-          ) : error ? (
-            <p className="text-sm text-destructive">Error loading data</p>
-          ) : (
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">{value}</span>
-              {trend && (
-                <span
-                  className={clsx(
-                    "text-xs font-medium px-2 py-1 rounded",
-                    trend.direction === "up"
-                      ? "text-green-700 bg-green-100"
-                      : "text-red-700 bg-red-100"
-                  )}
-                >
-                  {trend.direction === "up" ? "↑" : "↓"} {trend.value}% {trend.label}
+        <div className="space-y-3">
+          {/* Value */}
+          <div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-24 rounded-md" />
+            ) : error ? (
+              <p className="text-sm text-destructive">Error loading data</p>
+            ) : (
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl md:text-4xl font-bold text-foreground leading-none">{value}</span>
+                {trend && (
+                  <span
+                    className={clsx(
+                      "text-xs font-semibold px-2.5 py-1.5 rounded-md whitespace-nowrap",
+                      trend.direction === "up"
+                        ? "text-white bg-[color:var(--trend-up)]"
+                        : "text-white bg-[color:var(--trend-down)]"
+                    )}
+                    aria-label={`${trend.direction === "up" ? "Increase" : "Decrease"} ${trend.value}% ${trend.label}`}
+                  >
+                    {trend.direction === "up" ? "↑" : "↓"} {trend.value}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          {description && !isLoading && !error && (
+            <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+          )}
+
+          {/* Footer */}
+          {footer && !isLoading && !error && (
+            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">{footer}</span>
+              {actionLabel && (
+                <span className="text-xs font-semibold text-primary">
+                  {actionLabel}
                 </span>
               )}
             </div>
           )}
         </div>
-
-        {/* Description */}
-        {description && !isLoading && !error && (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        )}
-
-        {/* Footer */}
-        {footer && !isLoading && !error && (
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-xs text-muted-foreground">{footer}</span>
-            {actionLabel && (
-              <button className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
-                {actionLabel}
-              </button>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </button>
   )
 }
 

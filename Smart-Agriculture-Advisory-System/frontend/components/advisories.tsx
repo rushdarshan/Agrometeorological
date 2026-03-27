@@ -92,11 +92,12 @@ export function Advisories() {
           <Button
             className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
             onClick={() => alert("Report download started. Check your downloads folder.")}
+            aria-label="Download advisory report as PDF"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Download Report
+            Download Report (PDF)
           </Button>
-          <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center" aria-hidden="true">
             <span className="text-lg">👨‍🌾</span>
           </div>
         </div>
@@ -292,7 +293,7 @@ export function Advisories() {
         <Dialog open={!!selectedAdvisory} onOpenChange={() => setSelectedAdvisory(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="capitalize">{selectedAdvisory.advisory_type.replace(/_/g, " ")}</DialogTitle>
+              <DialogTitle className="capitalize">{selectedAdvisory.advisory_type?.replace(/_/g, " ") || "Advisory"}</DialogTitle>
               <DialogDescription>Advisory Details & Recommendations</DialogDescription>
             </DialogHeader>
 
@@ -346,7 +347,7 @@ export function Advisories() {
                 <div className="bg-secondary/50 p-4 rounded-lg">
                   <p className="text-sm text-muted-foreground">
                     💡 <strong>How we calculated this:</strong> This advisory was generated based on current weather conditions, crop stage, and
-                    historical patterns for {selectedAdvisory.advisory_type.replace(/_/g, " ")} in your region.
+                    historical patterns for {selectedAdvisory.advisory_type?.replace(/_/g, " ") || "this advisory"} in your region.
                   </p>
                 </div>
               </div>

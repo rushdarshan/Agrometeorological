@@ -59,7 +59,7 @@ export function Profile() {
   const farms = farmsData || []
 
   const profileStats = [
-    { label: "Farms", value: String(farms.length), color: "text-primary" },
+    { label: "Farms", value: String(Array.isArray(farms) ? farms.length : 0), color: "text-primary" },
     { label: "Advisories", value: "24", color: "text-foreground" },
     { label: "Engagement", value: "92%", color: "text-green-600" },
   ]
@@ -381,7 +381,7 @@ export function Profile() {
             <CardContent className="space-y-3">
               {farmsLoading ? (
                 <div className="text-center py-4 text-muted-foreground">Loading farms...</div>
-              ) : farms.length === 0 ? (
+              ) : (Array.isArray(farms) ? farms.length : 0) === 0 ? (
                 <div className="text-center py-4 text-muted-foreground">
                   <p>No farms added yet</p>
                   <Button size="sm" variant="outline" className="mt-2">
@@ -390,7 +390,7 @@ export function Profile() {
                   </Button>
                 </div>
               ) : (
-                farms.map((farm) => (
+                (Array.isArray(farms) ? farms : []).map((farm) => (
                   <div
                     key={farm.id}
                     className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"

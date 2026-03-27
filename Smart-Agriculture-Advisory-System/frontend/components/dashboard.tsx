@@ -78,7 +78,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
   useEffect(() => {
     if (userName) {
       setFarmerName(userName)
-    } else if (farms && farms.length > 0) {
+    } else if (Array.isArray(farms) && farms.length > 0) {
       const firstFarmOwner = farms[0]?.farmer_name || "Farmer"
       setFarmerName(firstFarmOwner)
     }
@@ -86,26 +86,26 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
 
   // Sensor data - mock
   const sensorData = {
-    online: farms?.length || 0,
-    lowBattery: Math.floor((farms?.length || 0) * 0.1),
-    offline: Math.floor((farms?.length || 0) * 0.05),
+    online: (Array.isArray(farms) ? farms.length : 0) || 0,
+    lowBattery: Math.floor((Array.isArray(farms) ? farms.length : 0) * 0.1),
+    offline: Math.floor((Array.isArray(farms) ? farms.length : 0) * 0.05),
   }
 
   // Weather from first farm
-  const firstFarmWeather = farms?.[0]?.last_weather
+  const firstFarmWeather = (Array.isArray(farms) && farms[0]) ? farms[0]?.last_weather : null
 
   // Harvest data - with fallback for demo if no farms loaded
   const harvestData = {
-    total: farms && farms.length > 0
+    total: Array.isArray(farms) && farms.length > 0
       ? farms.reduce((sum: number, f: any) => sum + (f.area_hectares || 0), 0)
       : 0,
-    crops: farms && farms.length > 0
+    crops: Array.isArray(farms) && farms.length > 0
       ? [...new Set(farms.map((f: any) => f.crop_name) || [])]
       : []
   }
 
   // Derived tasks
-  const tasks = ((farms || []).slice(0, 2).map((f: any, i: number) => ({
+  const tasks = (Array.isArray(farms) ? farms : []).slice(0, 2).map((f: any, i: number) => ({
     id: f.id,
     title: f.last_advisory?.advisory_type?.replace(/_/g, " ") || (i === 0 ? "Farm Check" : "Monitoring"),
     location: f.farm_name,
@@ -120,13 +120,13 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
     id: 999,
     title: "Regional Advisory",
     location: `${selectedDistrict} district`,
-    date: `${stats?.active_advisories_count || 0} active advisories`,
+    date: `${(stats as any)?.active_advisories_count || 0} active advisories`,
     status: "Active",
     statusColor: "bg-primary text-primary-foreground",
-  }]))
+  }]);
 
-  const fields = (farms || []).length
-    ? (farms || []).slice(0, 3).map((f: any, i: number) => ({
+  const fields = (Array.isArray(farms) ? farms : []).length
+    ? (Array.isArray(farms) ? farms : []).slice(0, 3).map((f: any, i: number) => ({
         id: f.id,
         name: f.farm_name,
         type: f.crop_name,
@@ -135,36 +135,36 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
         health: 0.7 + (Math.random() * 0.3),
         color: fieldColors[i % 3],
       }))
-    : []
+    : [];
 
   const monthName = currentDate.toLocaleString("default", { month: "long", year: "numeric" })
 
   return (
-    <div className="p-6 lg:p-8 space-y-8">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 pb-20 md:pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-foreground">Hi {farmerName}! 👨‍🌾</h1>
-          <p className="text-muted-foreground text-sm mt-1" suppressHydrationWarning>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">Hi {farmerName}! 👨‍🌾</h1>
+          <p className="text-muted-foreground text-xs md:text-sm mt-1" suppressHydrationWarning>
             {selectedDistrict} district • {currentDate.toLocaleDateString('en-US')}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-4 md:px-6 text-sm md:text-base"
             onClick={onAddFarmer}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Farm
           </Button>
-          <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center flex-shrink-0">
             <span className="text-lg">👨‍🌾</span>
           </div>
         </div>
       </div>
 
       {/* Summary Stats - Improved Layout */}
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
         {/* Primary Stat - Featured */}
         {statsLoading ? (
           <StatCardSkeleton />
@@ -190,8 +190,8 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-2">Total Active Advisories</p>
-                    <p className="text-5xl font-bold text-primary">{stats?.active_advisories_count || 0}</p>
-                    <p className="text-xs text-muted-foreground mt-3">Out of {stats?.active_advisories_count || 0} total alerts</p>
+                    <p className="text-5xl font-bold text-primary">{(stats as any)?.active_advisories_count || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-3">Out of {(stats as any)?.active_advisories_count || 0} total alerts</p>
                   </div>
                   <AlertCircle className="w-16 h-16 text-primary/20" />
                 </div>
@@ -202,17 +202,17 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard
                 title="High Priority"
-                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
+                value={Math.ceil(((stats as any)?.active_advisories_count || 0) * 0.3)}
                 variant="destructive"
               />
               <StatCard
                 title="Medium Priority"
-                value={Math.ceil((stats?.active_advisories_count || 0) * 0.4)}
+                value={Math.ceil(((stats as any)?.active_advisories_count || 0) * 0.4)}
                 variant="accent"
               />
               <StatCard
                 title="Low Priority"
-                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
+                value={Math.ceil(((stats as any)?.active_advisories_count || 0) * 0.3)}
                 variant="default"
               />
             </div>

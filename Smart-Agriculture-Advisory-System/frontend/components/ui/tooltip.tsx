@@ -38,7 +38,6 @@ function TooltipContent({
   className,
   sideOffset = 0,
   children,
-  delayDuration,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
   return (

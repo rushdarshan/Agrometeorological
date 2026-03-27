@@ -37,10 +37,10 @@ export function MyFarm({ onBack, farmId }: MyFarmProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState<Partial<Farm>>({
-    farm_name: timeline?.farm_name || "",
-    crop_name: timeline?.crop_name || "Rice",
-    area_hectares: timeline?.farm_name ? 5 : 0,
-    village: timeline?.farm_name ? "Village" : "",
+    farm_name: (timeline as any)?.farm_name || "",
+    crop_name: (timeline as any)?.crop_name || "Rice",
+    area_hectares: (timeline as any)?.farm_name ? 5 : 0,
+    village: (timeline as any)?.farm_name ? "Village" : "",
   })
 
   // Fallback if no farmId and still loading

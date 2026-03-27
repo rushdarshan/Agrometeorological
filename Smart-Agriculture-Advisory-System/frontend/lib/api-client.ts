@@ -261,7 +261,7 @@ export function useAdvisory(
  * Register a new farmer (mutation)
  */
 export function useRegisterFarmer(
-  options?: Omit<UseMutationOptions, "mutationFn">
+  options?: Omit<UseMutationOptions<any, Error, FarmerRegisterPayload>, "mutationFn">
 ) {
   return useMutation({
     mutationFn: (payload: FarmerRegisterPayload) => registerFarmer(payload),

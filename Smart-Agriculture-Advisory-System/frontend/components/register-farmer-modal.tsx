@@ -63,8 +63,8 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
 
   const onSubmit = async (data: FarmerRegisterFormData) => {
     try {
-      const result = await registerMutation.mutateAsync(data)
-      setSuccessMessage(`✓ Farmer "${result.name}" registered successfully! ID: ${result.id}`)
+      const result = await (registerMutation.mutateAsync as any)(data)
+      setSuccessMessage(`✓ Farmer "${(result as any).name}" registered successfully! ID: ${(result as any).id}`)
       setTimeout(() => {
         onSuccess?.()
         onClose()

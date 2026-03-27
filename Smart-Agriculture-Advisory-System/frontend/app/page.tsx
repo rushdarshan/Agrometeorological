@@ -7,6 +7,7 @@ import { MyFarm } from "@/components/my-farm"
 import { Advisories } from "@/components/advisories"
 import { Profile } from "@/components/profile"
 import { RegisterFarmerModal } from "@/components/register-farmer-modal"
+import { MobileNav } from "@/components/mobile-nav"
 import { useFarms } from "@/lib/api-client"
 
 export default function Home() {
@@ -19,7 +20,7 @@ export default function Home() {
 
   // Auto-select first farm on mount
   useEffect(() => {
-    if (!selectedFarmId && farms.length > 0) {
+    if (!selectedFarmId && Array.isArray(farms) && farms.length > 0) {
       setSelectedFarmId(farms[0].id)
     }
   }, [farms, selectedFarmId])
@@ -30,19 +31,22 @@ export default function Home() {
   }
 
   const handleViewAllTasks = () => {
-    // Navigate to advisories page to see all tasks/advisories
     setActiveView("advisories")
   }
 
   const handleViewAllFields = () => {
-    // Navigate to profile to see all farms/fields
     setActiveView("profile")
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} />
-      <main className="flex-1 overflow-auto">
+    <div className="flex flex-col md:flex-row h-screen bg-background">
+      {/* Desktop sidebar - hidden on mobile */}
+      <div className="hidden md:flex md:flex-col">
+        <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      </div>
+
+      {/* Main content */}
+      <main className="flex-1 overflow-auto flex flex-col">
         {activeView === "dashboard" && (
           <Dashboard
             onNavigateToFarm={navigateToFarm}
@@ -56,7 +60,11 @@ export default function Home() {
         {activeView === "farm"        && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}
         {activeView === "advisories"  && <Advisories />}
         {activeView === "profile"     && <Profile />}
+
+        {/* Mobile bottom navigation - visible only on mobile */}
+        <MobileNav activeView={activeView} setActiveView={setActiveView} />
       </main>
+
       {showRegister && (
         <RegisterFarmerModal
           onClose={() => setShowRegister(false)}
