@@ -108,6 +108,17 @@ export const VIEW_ROUTES = {
 
 export type ViewRoute = (typeof VIEW_ROUTES)[keyof typeof VIEW_ROUTES]
 
+// ── Navigation Items ─────────────────────────────────────────────────────
+
+export const NAVIGATION_ITEMS = [
+  { id: "dashboard" as const, label: "Dashboard", iconName: "LayoutDashboard" },
+  { id: "farm" as const, label: "My Farm", iconName: "Sprout" },
+  { id: "advisories" as const, label: "Advisories", iconName: "FileText" },
+  { id: "profile" as const, label: "Profile", iconName: "User" },
+] as const
+
+export type NavigationItemId = (typeof NAVIGATION_ITEMS)[number]["id"]
+
 // ── API Configuration ────────────────────────────────────────────────────
 
 export const API_CONFIG = {

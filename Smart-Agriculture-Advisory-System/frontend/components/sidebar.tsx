@@ -4,19 +4,26 @@ import { cn } from "@/lib/utils"
 import { LayoutDashboard, Sprout, FileText, User, Settings, Bell } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useRef, useState } from "react"
+import { NAVIGATION_ITEMS } from "@/lib/constants"
 
 interface SidebarProps {
   activeView: "dashboard" | "farm" | "advisories" | "profile"
   setActiveView: (view: "dashboard" | "farm" | "advisories" | "profile") => void
 }
 
+// Map icon names to actual icon components
+const ICON_MAP = {
+  LayoutDashboard,
+  Sprout,
+  FileText,
+  User,
+} as const
+
 export function Sidebar({ activeView, setActiveView }: SidebarProps) {
-  const navItems = [
-    { id: "dashboard" as const, icon: LayoutDashboard, label: "Dashboard" },
-    { id: "farm" as const, icon: Sprout, label: "My Farm" },
-    { id: "advisories" as const, icon: FileText, label: "Advisories" },
-    { id: "profile" as const, icon: User, label: "Profile" },
-  ]
+  const navItems = NAVIGATION_ITEMS.map((item) => ({
+    ...item,
+    icon: ICON_MAP[item.iconName as keyof typeof ICON_MAP],
+  }))
 
   const navRef = useRef<HTMLElement>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
