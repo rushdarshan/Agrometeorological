@@ -71,7 +71,7 @@ export interface FarmTimeline {
   farmer_name?: string
   advisories: {
     id: number
-    type: string
+    advisory_type: string
     message: string
     severity: string
     confidence: number
@@ -108,7 +108,7 @@ export interface FarmerRegisterPayload {
   latitude: number
   longitude: number
   crop_name: string
-  sowing_date?: string
+  sowing_date: string
   area_hectares?: number
   consented_advisory: boolean
   consented_data_use: boolean
@@ -157,5 +157,8 @@ export const registerFarmer = (payload: FarmerRegisterPayload) =>
   })
 
 /** Health check */
-export const healthCheck = () =>
-  apiFetch<{ status: string; ml_model_ready: boolean; weather_api: boolean }>(`/health`.replace("/api", ""))
+export const healthCheck = async () => {
+  const res = await fetch("http://localhost:8000/health")
+  if (!res.ok) throw new Error(`Health check failed: ${res.status}`)
+  return res.json() as Promise<{ status: string; ml_model_ready: boolean; weather_api: boolean }>
+}

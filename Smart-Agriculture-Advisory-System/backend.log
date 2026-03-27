@@ -1,0 +1,35 @@
+INFO:     Started server process [25740]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+{"timestamp": "2026-03-27T14:18:48.919751", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/advisories/list status=200 duration=0.187s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:50362 - "GET /api/advisories/list?limit=2 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:18:52.711058", "level": "INFO", "logger": "app.routers.dashboard", "message": "Regional stats calculated: advisories=9, delivery_rate=0%", "module": "dashboard", "function": "get_regional_stats", "line": 153}
+{"timestamp": "2026-03-27T14:18:52.714529", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/regional-stats status=200 duration=0.115s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:58491 - "GET /api/dashboard/regional-stats?district=Kaira HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:18:55.235758", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/farms status=200 duration=0.002s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:61615 - "OPTIONS /api/dashboard/farms?district=Kaira&limit=10 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:18:55.239152", "level": "ERROR", "logger": "asyncio", "message": "Exception in callback _ProactorBasePipeTransport._call_connection_lost()\nhandle: <Handle _ProactorBasePipeTransport._call_connection_lost()>", "module": "base_events", "function": "default_exception_handler", "line": 1879, "exception": "Traceback (most recent call last):\n  File \"C:\\Python313\\Lib\\asyncio\\events.py\", line 89, in _run\n    self._context.run(self._callback, *self._args)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Python313\\Lib\\asyncio\\proactor_events.py\", line 165, in _call_connection_lost\n    self._sock.shutdown(socket.SHUT_RDWR)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\nConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host"}
+{"timestamp": "2026-03-27T14:18:55.524389", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.029s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:52663 - "GET /api/dashboard/farms?district=Kaira&limit=10 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:18:56.529080", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farms status=200 duration=0.032s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:55912 - "GET /api/dashboard/farms?district=Kaira&limit=2 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:20:37.846874", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/advisories/list status=200 duration=0.064s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64306 - "GET /api/advisories/list?limit=10&skip=0 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:21:57.403529", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/dashboard/farm/0/timeline status=200 duration=0.003s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:51978 - "OPTIONS /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:21:57.405366", "level": "INFO", "logger": "main", "message": "Request completed: OPTIONS /api/weather/farm/0 status=200 duration=0.004s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64805 - "OPTIONS /api/weather/farm/0 HTTP/1.1" 200 OK
+{"timestamp": "2026-03-27T14:21:57.408702", "level": "ERROR", "logger": "asyncio", "message": "Exception in callback _ProactorBasePipeTransport._call_connection_lost()\nhandle: <Handle _ProactorBasePipeTransport._call_connection_lost()>", "module": "base_events", "function": "default_exception_handler", "line": 1879, "exception": "Traceback (most recent call last):\n  File \"C:\\Python313\\Lib\\asyncio\\events.py\", line 89, in _run\n    self._context.run(self._callback, *self._args)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Python313\\Lib\\asyncio\\proactor_events.py\", line 165, in _call_connection_lost\n    self._sock.shutdown(socket.SHUT_RDWR)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\nConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host"}
+{"timestamp": "2026-03-27T14:21:57.421282", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.007s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64805 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:21:57.432583", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.007s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64805 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:21:58.447774", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.007s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64805 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:21:58.468718", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.006s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64805 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:22:00.501417", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/dashboard/farm/0/timeline status=404 duration=0.013s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:64805 - "GET /api/dashboard/farm/0/timeline?days=30 HTTP/1.1" 404 Not Found
+{"timestamp": "2026-03-27T14:22:00.509046", "level": "INFO", "logger": "main", "message": "Request completed: GET /api/weather/farm/0 status=404 duration=0.015s [request_id=unknown]", "module": "main", "function": "request_logging_middleware", "line": 87}
+INFO:     127.0.0.1:65230 - "GET /api/weather/farm/0 HTTP/1.1" 404 Not Found

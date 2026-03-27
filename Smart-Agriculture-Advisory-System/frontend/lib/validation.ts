@@ -61,7 +61,28 @@ export const FarmerRegisterSchema = z.object({
     .max(VALIDATION_RULES.maxArea, "Area is too large")
     .optional(),
 
-  sowing_date: z.string().datetime().optional(),
+  sowing_date: z
+    .string()
+    .refine(
+      (val) => {
+        // Accept both YYYY-MM-DD and ISO datetime formats
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        const datetimeRegex = /^\d{4}-\d{2}-\d{2}T/;
+        return dateRegex.test(val) || datetimeRegex.test(val);
+      },
+      "Invalid date format"
+    )
+    .refine(
+      (val) => new Date(val) <= new Date(),
+      "Sowing date cannot be in the future"
+    )
+    .transform((val) => {
+      // Convert YYYY-MM-DD to ISO datetime if needed
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        return `${val}T00:00:00Z`;
+      }
+      return val;
+    }),
 
   consented_advisory: z
     .boolean()

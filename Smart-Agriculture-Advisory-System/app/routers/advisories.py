@@ -14,7 +14,53 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.post("/advisory", response_model=dict)
+@router.get("/list", response_model=List[dict])
+async def list_advisories(
+    limit: int = 20,
+    skip: int = 0,
+    farm_id: int | None = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of advisories with optional filtering.
+    Returns paginated results with farm and farmer details.
+    """
+    logger.debug(f"Listing advisories: limit={limit}, skip={skip}, farm_id={farm_id}")
+
+    query = db.query(models.Advisory).order_by(desc(models.Advisory.generated_at))
+
+    if farm_id:
+        query = query.filter(models.Advisory.farm_id == farm_id)
+
+    total = query.count()
+    advisories = query.offset(skip).limit(limit).all()
+
+    result = []
+    for advisory in advisories:
+        farm = db.query(models.Farm).filter(models.Farm.id == advisory.farm_id).first()
+        farmer = None
+        if farm:
+            farmer = db.query(models.Farmer).filter(models.Farmer.id == farm.farmer_id).first()
+
+        result.append({
+            "id": advisory.id,
+            "farm_id": advisory.farm_id,
+            "farm_name": farm.farm_name if farm else "Unknown",
+            "crop_name": farm.crop_name if farm else "Unknown",
+            "farmer_name": farmer.name if farmer else "Unknown",
+            "advisory_type": advisory.advisory_type.value,
+            "severity": advisory.severity.value,
+            "message": advisory.message,
+            "confidence": advisory.confidence,
+            "generated_at": advisory.generated_at.isoformat(),
+            "generated_by": advisory.generated_by
+        })
+
+    logger.debug(f"Returning {len(result)} advisories (total: {total})")
+    return result
+
+
+
 async def create_advisory(
     advisory_data: schemas.AdvisoryCreate,
     db: Session = Depends(get_db)

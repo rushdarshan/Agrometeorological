@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { SkeletonLoader } from "@/components/shared/skeleton-loader"
 import { LANGUAGES } from "@/lib/constants"
+import { useFarms } from "@/lib/api-client"
 import type { Farmer } from "@/lib/types"
 
 interface ProfileData extends Farmer {
@@ -53,11 +54,9 @@ export function Profile() {
     confirmPassword: "",
   })
 
-  const farms = [
-    { id: 1, farm_name: "Rice Field Alpha", area_hectares: 11, crop_name: "Rice", status: "Active" },
-    { id: 2, farm_name: "Wheat Plot Beta", area_hectares: 20, crop_name: "Wheat", status: "Active" },
-    { id: 3, farm_name: "Cotton Farm Gamma", area_hectares: 15, crop_name: "Cotton", status: "Active" },
-  ]
+  // Fetch farms from API - default to Kaira district for demo
+  const { data: farmsData = [], isLoading: farmsLoading } = useFarms("Kaira", 10)
+  const farms = farmsData || []
 
   const profileStats = [
     { label: "Farms", value: String(farms.length), color: "text-primary" },
@@ -375,27 +374,39 @@ export function Profile() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              {farms.map((farm) => (
-                <div
-                  key={farm.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <span className="text-2xl">🌾</span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{farm.farm_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {farm.area_hectares} ha · {farm.crop_name}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 rounded-full">
-                    {farm.status}
-                  </Badge>
+              {farmsLoading ? (
+                <div className="text-center py-4 text-muted-foreground">Loading farms...</div>
+              ) : farms.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p>No farms added yet</p>
+                  <Button size="sm" variant="outline" className="mt-2">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Your First Farm
+                  </Button>
                 </div>
-              ))}
+              ) : (
+                farms.map((farm) => (
+                  <div
+                    key={farm.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span className="text-2xl">🌾</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{farm.farm_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {farm.area_hectares} ha · {farm.crop_name}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 rounded-full">
+                      Active
+                    </Badge>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

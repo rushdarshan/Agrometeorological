@@ -18,6 +18,16 @@ export default function Home() {
     setActiveView("farm")
   }
 
+  const handleViewAllTasks = () => {
+    // Navigate to advisories page to see all tasks/advisories
+    setActiveView("advisories")
+  }
+
+  const handleViewAllFields = () => {
+    // Navigate to profile to see all farms/fields
+    setActiveView("profile")
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
@@ -26,6 +36,10 @@ export default function Home() {
           <Dashboard
             onNavigateToFarm={navigateToFarm}
             onAddFarmer={() => setShowRegister(true)}
+            onViewAllTasks={handleViewAllTasks}
+            onViewAllFields={handleViewAllFields}
+            userDistrict="Kaira"
+            userName="Ramesh Patel"
           />
         )}
         {activeView === "farm"        && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}

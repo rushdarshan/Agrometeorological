@@ -36,6 +36,7 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
       state: "Gujarat",
       latitude: 22.75,
       longitude: 72.68,
+      sowing_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       consented_advisory: false,
       consented_data_use: false,
       preferred_language: "en",
@@ -254,6 +255,22 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
                 )}
               </div>
 
+              {/* Sowing Date */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Sowing Date <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  {...register("sowing_date")}
+                  type="date"
+                  className="rounded-lg"
+                  disabled={isLoading}
+                />
+                {errors.sowing_date && (
+                  <p className="text-sm text-destructive mt-1">{errors.sowing_date.message}</p>
+                )}
+              </div>
+
               {/* Language Preference */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -276,11 +293,47 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            {/* Latitude and Longitude - Hidden but set to defaults */}
-            <input type="hidden" {...register("latitude", { valueAsNumber: true })} />
-            <input type="hidden" {...register("longitude", { valueAsNumber: true })} />
+              {/* Latitude */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Latitude <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  {...register("latitude", { valueAsNumber: true })}
+                  type="number"
+                  step="0.0001"
+                  min="-90"
+                  max="90"
+                  placeholder="22.75"
+                  className="rounded-lg"
+                  disabled={isLoading}
+                />
+                {errors.latitude && (
+                  <p className="text-sm text-destructive mt-1">{errors.latitude.message}</p>
+                )}
+              </div>
+
+              {/* Longitude */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Longitude <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  {...register("longitude", { valueAsNumber: true })}
+                  type="number"
+                  step="0.0001"
+                  min="-180"
+                  max="180"
+                  placeholder="72.68"
+                  className="rounded-lg"
+                  disabled={isLoading}
+                />
+                {errors.longitude && (
+                  <p className="text-sm text-destructive mt-1">{errors.longitude.message}</p>
+                )}
+              </div>
+            </div>
 
             {/* Consent Checkboxes */}
             <div className="border-t border-border pt-6 space-y-4">

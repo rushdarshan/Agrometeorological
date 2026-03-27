@@ -33,7 +33,7 @@ class FarmerRegister(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     crop_name: str
     sowing_date: datetime
-    area_hectares: float = Field(..., gt=0)
+    area_hectares: Optional[float] = Field(None, gt=0)
     consented_advisory: bool
     consented_data_use: bool
     preferred_language: str = "en"

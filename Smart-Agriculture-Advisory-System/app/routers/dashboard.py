@@ -70,9 +70,9 @@ async def list_farms(
                 "lon": lon,
                 "last_advisory": {
                     "id": last_advisory.id,
-                    "advisory_type": last_advisory.advisory_type,
+                    "advisory_type": last_advisory.advisory_type.value,
                     "message": last_advisory.message,
-                    "severity": last_advisory.severity,
+                    "severity": last_advisory.severity.value,
                     "confidence": last_advisory.confidence,
                     "generated_at": last_advisory.generated_at
                 } if last_advisory else None,
@@ -157,7 +157,7 @@ async def get_regional_stats(
             "total_farmers": total_farmers,
             "active_advisories_count": active_advisories,
             "avg_engagement_rate": round(engagement_rate, 2),
-            "advisory_type_distribution": dict(type_dist),
+            "advisory_type_distribution": {item[0].value: item[1] for item in type_dist},
             "sms_delivery_rate": sms_delivery_rate,
             "district": district,
             "crop": crop
@@ -231,13 +231,13 @@ async def get_farm_timeline(farm_id: int, days: int = 30, db: Session = Depends(
         "advisories": [
             {
                 "id": a.id,
-                "type": a.advisory_type,
+                "advisory_type": a.advisory_type.value,
                 "message": a.message,
-                "severity": a.severity,
+                "severity": a.severity.value,
                 "confidence": a.confidence,
                 "generated_by": a.generated_by,
                 "shap_explanation": a.shap_explanation,
-                "generated_at": a.generated_at
+                "generated_at": a.generated_at.isoformat()
             } for a in advisories
         ],
         "weather": [
