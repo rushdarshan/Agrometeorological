@@ -290,8 +290,8 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                 <p className="text-muted-foreground text-sm mt-1">hectares under cultivation</p>
                 {harvestData.crops.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                    {harvestData.crops.map((crop: string) => (
-                      <Badge key={crop} variant="secondary">{crop}</Badge>
+                    {harvestData.crops.map((crop: string, idx: number) => (
+                      <Badge key={`${crop}-${idx}`} variant="secondary">{crop}</Badge>
                     ))}
                   </div>
                 )}
