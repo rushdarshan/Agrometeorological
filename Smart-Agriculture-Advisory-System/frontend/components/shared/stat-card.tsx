@@ -83,10 +83,10 @@ export function StatCard({
         </div>
 
         <div className="space-y-3">
-          {/* Value */}
-          <div>
+          {/* Value - use fixed height to prevent layout shift */}
+          <div className="h-10 md:h-12">
             {isLoading ? (
-              <Skeleton className="h-8 w-24 rounded-md" />
+              <Skeleton className="h-full w-32 rounded-md" />
             ) : error ? (
               <p className="text-sm text-destructive">Error loading data</p>
             ) : (
@@ -97,8 +97,8 @@ export function StatCard({
                     className={clsx(
                       "text-xs font-semibold px-2.5 py-1.5 rounded-md whitespace-nowrap",
                       trend.direction === "up"
-                        ? "text-white bg-[color:var(--trend-up)]"
-                        : "text-white bg-[color:var(--trend-down)]"
+                        ? "text-white bg-green-500"
+                        : "text-white bg-red-500"
                     )}
                     aria-label={`${trend.direction === "up" ? "Increase" : "Decrease"} ${trend.value}% ${trend.label}`}
                   >
