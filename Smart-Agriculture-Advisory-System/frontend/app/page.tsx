@@ -51,14 +51,14 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-background">
-      {/* Desktop sidebar - hidden on mobile, with padding */}
-      <div className="hidden md:flex md:flex-col md:flex-shrink-0">
+    <div className="flex h-screen bg-background">
+      {/* Desktop sidebar - fixed on left, hidden on mobile */}
+      <div className="hidden md:flex md:w-20 md:flex-shrink-0 md:fixed md:left-0 md:top-0 md:h-screen md:z-40">
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
       </div>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto flex flex-col">
+      {/* Main content - offset from fixed sidebar on desktop */}
+      <main className="flex-1 overflow-auto flex flex-col md:ml-20">
         <ErrorBoundary>
           {activeView === "dashboard" && (
             <Dashboard
