@@ -246,3 +246,22 @@ export const BREAKPOINTS = {
   xl: "1280px",
   "2xl": "1536px",
 } as const
+
+// ── Dashboard Thresholds ──────────────────────────────────────────────────
+
+export const DASHBOARD_THRESHOLDS = {
+  // Advisory severity distribution (should sum to 1.0)
+  highPriority: 0.3,     // 30% of advisories
+  mediumPriority: 0.4,   // 40% of advisories
+  lowPriority: 0.3,      // 30% of advisories
+  
+  // Field health simulation range
+  fieldHealthMin: 0.7,
+  fieldHealthRandomMax: 0.3,
+  
+  // Regional advisory synthetic ID (placeholder)
+  regionalAdvisoryId: 999,
+  
+  // Calendar display grid size
+  calendarDays: 35,
+} as const

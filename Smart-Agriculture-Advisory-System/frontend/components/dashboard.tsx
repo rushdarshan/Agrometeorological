@@ -20,7 +20,7 @@ import {
 import { useDashboardStats, useFarms } from "@/lib/api-client"
 import { StatCard, StatCardSkeleton } from "@/components/shared/stat-card"
 import { SkeletonLoader } from "@/components/shared/skeleton-loader"
-import { DISTRICTS } from "@/lib/constants"
+import { DISTRICTS, DASHBOARD_THRESHOLDS } from "@/lib/constants"
 import { RegionalStats, Farm } from "@/lib/types"
 import { useState, useEffect } from "react"
 
@@ -130,7 +130,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
       ? "bg-yellow-600 text-white"
       : "bg-primary text-primary-foreground",
   })).concat([{
-    id: 999,
+    id: DASHBOARD_THRESHOLDS.regionalAdvisoryId,
     title: "Regional Advisory",
     location: `${selectedDistrict} district`,
     date: `${safeStats.active_advisories_count} active advisories`,
@@ -145,7 +145,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
         type: f.crop_name,
         harvest: f.last_advisory?.advisory_type ? `Advisory: ${f.last_advisory.advisory_type.replace(/_/g, " ")}` : `${f.village}`,
         size: `${f.area_hectares} ha`,
-        health: 0.7 + (Math.random() * 0.3),
+        health: DASHBOARD_THRESHOLDS.fieldHealthMin + (Math.random() * DASHBOARD_THRESHOLDS.fieldHealthRandomMax),
         color: fieldColors[i % 3],
       }))
     : [];
@@ -215,17 +215,17 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard
                 title="High Priority"
-                value={Math.ceil(safeStats.active_advisories_count * 0.3)}
+                value={Math.ceil(safeStats.active_advisories_count * DASHBOARD_THRESHOLDS.highPriority)}
                 variant="destructive"
               />
               <StatCard
                 title="Medium Priority"
-                value={Math.ceil(safeStats.active_advisories_count * 0.4)}
+                value={Math.ceil(safeStats.active_advisories_count * DASHBOARD_THRESHOLDS.mediumPriority)}
                 variant="accent"
               />
               <StatCard
                 title="Low Priority"
-                value={Math.ceil(safeStats.active_advisories_count * 0.3)}
+                value={Math.ceil(safeStats.active_advisories_count * DASHBOARD_THRESHOLDS.lowPriority)}
                 variant="default"
               />
             </div>
@@ -368,7 +368,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                     <div
                       key={task.id}
                       className="p-3 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
-                      onClick={() => task.id !== 999 && onNavigateToFarm(task.id)}
+                      onClick={() => task.id !== DASHBOARD_THRESHOLDS.regionalAdvisoryId && onNavigateToFarm(task.id)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
@@ -475,7 +475,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
                     <p key={day} className="font-medium text-muted-foreground">{day}</p>
                   ))}
-                  {Array.from({ length: 35 }).map((_, i) => {
+                  {Array.from({ length: DASHBOARD_THRESHOLDS.calendarDays }).map((_, i) => {
                     const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay()
                     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
                     const dayNum = i - firstDay + 1
