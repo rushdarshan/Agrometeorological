@@ -2,7 +2,6 @@
 
 import { ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 
 /**
  * Exponential backoff delay: 1000ms * 2^(attempt-1)
@@ -51,11 +50,6 @@ export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {/* DevTools for debugging (only in development) */}
-      <ReactQueryDevtools
-        initialIsOpen={false}
-        buttonPosition="bottom-right"
-      />
     </QueryClientProvider>
   )
 }
