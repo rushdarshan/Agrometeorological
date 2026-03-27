@@ -231,7 +231,7 @@ export function Advisories() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{new Date(advisory.generated_at || "").toLocaleDateString()}</span>
+                        <span suppressHydrationWarning>{new Date(advisory.generated_at || "").toLocaleDateString('en-US')}</span>
                       </div>
                       {advisory.generated_by && (
                         <span className="text-xs bg-muted px-2 py-1 rounded-md">{advisory.generated_by}</span>
@@ -319,8 +319,8 @@ export function Advisories() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Date Generated</label>
-                  <p className="text-muted-foreground">
-                    {new Date(selectedAdvisory.generated_at || "").toLocaleString()}
+                  <p className="text-muted-foreground" suppressHydrationWarning>
+                    {new Date(selectedAdvisory.generated_at || "").toLocaleString('en-US')}
                   </p>
                 </div>
 

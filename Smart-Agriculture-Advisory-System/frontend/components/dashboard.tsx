@@ -94,10 +94,14 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
   // Weather from first farm
   const firstFarmWeather = farms?.[0]?.last_weather
 
-  // Harvest data
+  // Harvest data - with fallback for demo if no farms loaded
   const harvestData = {
-    total: farms?.reduce((sum: number, f: any) => sum + (f.area_hectares || 0), 0) || 0,
-    crops: [...new Set(farms?.map((f: any) => f.crop_name) || [])]
+    total: farms && farms.length > 0
+      ? farms.reduce((sum: number, f: any) => sum + (f.area_hectares || 0), 0)
+      : 0,
+    crops: farms && farms.length > 0
+      ? [...new Set(farms.map((f: any) => f.crop_name) || [])]
+      : []
   }
 
   // Derived tasks
@@ -141,7 +145,9 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-foreground">Hi {farmerName}! 👨‍🌾</h1>
-          <p className="text-muted-foreground text-sm mt-1">{selectedDistrict} district • {currentDate.toLocaleDateString()}</p>
+          <p className="text-muted-foreground text-sm mt-1" suppressHydrationWarning>
+            {selectedDistrict} district • {currentDate.toLocaleDateString('en-US')}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button

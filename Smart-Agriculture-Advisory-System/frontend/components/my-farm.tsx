@@ -265,8 +265,8 @@ export function MyFarm({ onBack, farmId }: MyFarmProps) {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">{advisory.message}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(advisory.generated_at || "").toLocaleDateString()}
+                        <p className="text-xs text-muted-foreground mt-2" suppressHydrationWarning>
+                          {new Date(advisory.generated_at || "").toLocaleDateString('en-US')}
                         </p>
                       </div>
                     </div>
