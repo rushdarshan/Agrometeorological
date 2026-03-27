@@ -183,24 +183,24 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
         ) : (
           <>
             <StatCard
-              label="Total Advisories"
+              title="Total Advisories"
               value={stats?.active_advisories_count || 0}
-              color="text-primary"
+              variant="default"
             />
             <StatCard
-              label="High Priority"
+              title="High Priority"
               value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
-              color="text-destructive"
+              variant="destructive"
             />
             <StatCard
-              label="Medium Priority"
+              title="Medium Priority"
               value={Math.ceil((stats?.active_advisories_count || 0) * 0.4)}
-              color="text-yellow-600"
+              variant="accent"
             />
             <StatCard
-              label="Low Priority"
+              title="Low Priority"
               value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
-              color="text-blue-600"
+              variant="default"
             />
           </>
         )}
