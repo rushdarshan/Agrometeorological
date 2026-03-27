@@ -21,6 +21,7 @@ import { useDashboardStats, useFarms } from "@/lib/api-client"
 import { StatCard, StatCardSkeleton } from "@/components/shared/stat-card"
 import { SkeletonLoader } from "@/components/shared/skeleton-loader"
 import { DISTRICTS } from "@/lib/constants"
+import { RegionalStats, Farm } from "@/lib/types"
 import { useState, useEffect } from "react"
 
 interface DashboardProps {
@@ -35,7 +36,7 @@ interface DashboardProps {
 const fieldColors = ["from-amber-400 to-amber-200", "from-green-400 to-green-200", "from-emerald-400 to-emerald-200"]
 
 // Empty State Component
-function EmptyState({ icon: Icon, title, description, action }: any) {
+function EmptyState({ icon: Icon, title, description, action }: { icon: React.ComponentType<{className?: string}>; title: string; description: string; action?: React.ReactNode }) {
   return (
     <Card className="border-dashed">
       <CardContent className="pt-6">
@@ -84,28 +85,29 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
     }
   }, [farms, userName])
 
-  // Sensor data - mock
+  // Sensor data - TODO: Fetch from sensor API when available
+  // Currently placeholder, should come from IoT/sensor endpoints
   const sensorData = {
-    online: (Array.isArray(farms) ? farms.length : 0) || 0,
-    lowBattery: Math.floor((Array.isArray(farms) ? farms.length : 0) * 0.1),
-    offline: Math.floor((Array.isArray(farms) ? farms.length : 0) * 0.05),
+    online: 0,
+    lowBattery: 0,
+    offline: 0,
   }
 
   // Weather from first farm
   const firstFarmWeather = (Array.isArray(farms) && farms[0]) ? farms[0]?.last_weather : null
 
-  // Harvest data - with fallback for demo if no farms loaded
+  // Harvest data - calculated from farms
   const harvestData = {
     total: Array.isArray(farms) && farms.length > 0
-      ? farms.reduce((sum: number, f: any) => sum + (f.area_hectares || 0), 0)
+      ? farms.reduce((sum: number, f: Farm) => sum + (f.area_hectares || 0), 0)
       : 0,
     crops: Array.isArray(farms) && farms.length > 0
-      ? [...new Set(farms.map((f: any) => f.crop_name) || [])]
+      ? [...new Set(farms.map((f: Farm) => f.crop_name) || [])]
       : []
   }
 
   // Derived tasks
-  const tasks = (Array.isArray(farms) ? farms : []).slice(0, 2).map((f: any, i: number) => ({
+  const tasks = (Array.isArray(farms) ? farms : []).slice(0, 2).map((f: Farm, i: number) => ({
     id: f.id,
     title: f.last_advisory?.advisory_type?.replace(/_/g, " ") || (i === 0 ? "Farm Check" : "Monitoring"),
     location: f.farm_name,
@@ -120,13 +122,13 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
     id: 999,
     title: "Regional Advisory",
     location: `${selectedDistrict} district`,
-    date: `${(stats as any)?.active_advisories_count || 0} active advisories`,
+    date: `${stats?.active_advisories_count || 0} active advisories`,
     status: "Active",
     statusColor: "bg-primary text-primary-foreground",
   }]);
 
   const fields = (Array.isArray(farms) ? farms : []).length
-    ? (Array.isArray(farms) ? farms : []).slice(0, 3).map((f: any, i: number) => ({
+    ? (Array.isArray(farms) ? farms : []).slice(0, 3).map((f: Farm, i: number) => ({
         id: f.id,
         name: f.farm_name,
         type: f.crop_name,
@@ -190,8 +192,8 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-2">Total Active Advisories</p>
-                    <p className="text-5xl font-bold text-primary">{(stats as any)?.active_advisories_count || 0}</p>
-                    <p className="text-xs text-muted-foreground mt-3">Out of {(stats as any)?.active_advisories_count || 0} total alerts</p>
+                    <p className="text-5xl font-bold text-primary">{stats?.active_advisories_count || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-3">Out of {stats?.active_advisories_count || 0} total alerts</p>
                   </div>
                   <AlertCircle className="w-16 h-16 text-primary/20" />
                 </div>
@@ -202,17 +204,17 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard
                 title="High Priority"
-                value={Math.ceil(((stats as any)?.active_advisories_count || 0) * 0.3)}
+                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
                 variant="destructive"
               />
               <StatCard
                 title="Medium Priority"
-                value={Math.ceil(((stats as any)?.active_advisories_count || 0) * 0.4)}
+                value={Math.ceil((stats?.active_advisories_count || 0) * 0.4)}
                 variant="accent"
               />
               <StatCard
                 title="Low Priority"
-                value={Math.ceil(((stats as any)?.active_advisories_count || 0) * 0.3)}
+                value={Math.ceil((stats?.active_advisories_count || 0) * 0.3)}
                 variant="default"
               />
             </div>
@@ -277,7 +279,7 @@ export function Dashboard({ onNavigateToFarm, onAddFarmer, onViewAllTasks, onVie
                 <p className="text-muted-foreground text-sm mt-1">hectares under cultivation</p>
                 {harvestData.crops.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                    {harvestData.crops.map((crop: any) => (
+                    {harvestData.crops.map((crop: string) => (
                       <Badge key={crop} variant="secondary">{crop}</Badge>
                     ))}
                   </div>
