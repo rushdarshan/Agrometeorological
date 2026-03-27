@@ -3,7 +3,7 @@
  * Provides type-safe API calls with caching, retry, and error handling
  */
 
-import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from "@tanstack/react-query"
+import { useQuery, useMutation, UseQueryOptions, UseMutationOptions, useQueryClient } from "@tanstack/react-query"
 import {
   RegionalStats,
   Farm,
@@ -265,12 +265,26 @@ export function useAdvisory(
 
 /**
  * Register a new farmer (mutation)
+ * Invalidates dashboard stats and farms list on success
  */
 export function useRegisterFarmer(
   options?: Omit<UseMutationOptions<{ id: number; name: string; phone: string }, Error, FarmerRegisterPayload>, "mutationFn">
 ) {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (payload: FarmerRegisterPayload) => registerFarmer(payload),
+    onSuccess: async (data, variables) => {
+      // Invalidate relevant queries when registration succeeds
+      // This ensures fresh data is refetched without stale cache
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.farms(variables.district) }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats(variables.district) }),
+      ])
+      
+      // Call user's onSuccess callback if provided
+      options?.onSuccess?.(data, variables, undefined as any)
+    },
     ...options,
   })
 }
