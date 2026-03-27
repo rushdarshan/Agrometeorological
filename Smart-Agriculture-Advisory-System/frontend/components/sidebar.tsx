@@ -5,6 +5,8 @@ import { LayoutDashboard, Sprout, FileText, User, Settings, Bell } from "lucide-
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useRef, useState } from "react"
 import { NAVIGATION_ITEMS } from "@/lib/constants"
+import { SettingsModal } from "@/components/shared/settings-modal"
+import { NotificationsModal } from "@/components/shared/notifications-modal"
 
 interface SidebarProps {
   activeView: "dashboard" | "farm" | "advisories" | "profile"
@@ -27,6 +29,8 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
 
   const navRef = useRef<HTMLElement>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
 
   const handleKeyDown = (e: React.KeyboardEvent, itemId: string) => {
     const buttons = navRef.current?.querySelectorAll("button")
@@ -97,6 +101,7 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
+                onClick={() => setSettingsOpen(true)}
                 aria-label="Settings"
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
@@ -110,6 +115,7 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
+                onClick={() => setNotificationsOpen(true)}
                 aria-label="Notifications (You have unread notifications)"
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 relative"
               >
@@ -123,6 +129,10 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
           </Tooltip>
         </div>
       </aside>
+
+      {/* Modals */}
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <NotificationsModal isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </TooltipProvider>
   )
 }

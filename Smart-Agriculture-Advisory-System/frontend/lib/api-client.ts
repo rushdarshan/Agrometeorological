@@ -277,13 +277,11 @@ export function useRegisterFarmer(
     onSuccess: async (data, variables) => {
       // Invalidate relevant queries when registration succeeds
       // This ensures fresh data is refetched without stale cache
+      const district = variables.district || "all"
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.farms(variables.district) }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats(variables.district) }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.farms(district, 20) }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.regionalStats(district) }),
       ])
-      
-      // Call user's onSuccess callback if provided
-      options?.onSuccess?.(data, variables, undefined as any)
     },
     ...options,
   })
