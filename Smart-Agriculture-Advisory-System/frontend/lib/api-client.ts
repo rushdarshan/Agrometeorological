@@ -14,6 +14,11 @@ import {
   FarmerRegisterPayload,
   HealthCheckResponse,
   PaginatedResponse,
+  CropPredictRequest,
+  CropPredictResponse,
+  ModelStatus,
+  CropYieldTelemetryCreate,
+  CropYieldTelemetryResponse,
 } from "./types"
 import { API_CONFIG, QUERY_KEYS } from "./constants"
 
@@ -121,6 +126,42 @@ export async function registerFarmer(
 
 export async function fetchHealth(): Promise<HealthCheckResponse> {
   return apiFetch<HealthCheckResponse>(`/health`.replace("/api", ""))
+}
+
+// ── ML Predict API ──────────────────────────────────────────────────────
+
+export async function predictCrop(
+  payload: CropPredictRequest
+): Promise<CropPredictResponse> {
+  return apiFetch<CropPredictResponse>(`/predict/crop`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function fetchModelStatus(): Promise<ModelStatus> {
+  return apiFetch<ModelStatus>(`/predict/model-status`)
+}
+
+// ── ML Telemetry API ───────────────────────────────────────────────────
+
+export async function submitTelemetry(
+  payload: CropYieldTelemetryCreate
+): Promise<CropYieldTelemetryResponse> {
+  return apiFetch<CropYieldTelemetryResponse>(`/ml/telemetry`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function triggerRetraining(): Promise<{ message: string; task_id: string }> {
+  return apiFetch<{ message: string; task_id: string }>(`/ml/retrain`, {
+    method: "POST",
+    // Mock Authentication Bypass for Demo/MVP showcasing
+    headers: {
+      Authorization: "Bearer dev-admin-token-123",
+    },
+  })
 }
 
 // ── React Query Hooks ────────────────────────────────────────────────────
@@ -280,6 +321,57 @@ export function useHealthCheck(
     queryFn: () => fetchHealth(),
     staleTime: 30 * 1000, // 30 seconds
     retry: 2,
+    ...options,
+  })
+}
+
+/**
+ * Predict best crop (mutation)
+ */
+export function usePredictCrop(
+  options?: Omit<UseMutationOptions, "mutationFn">
+) {
+  return useMutation({
+    mutationFn: (payload: CropPredictRequest) => predictCrop(payload),
+    ...options,
+  })
+}
+
+/**
+ * Model status
+ */
+export function useModelStatus(
+  options?: Omit<UseQueryOptions, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.modelStatus(),
+    queryFn: () => fetchModelStatus(),
+    staleTime: 60 * 1000, // 1 minute
+    retry: 1,
+    ...options,
+  })
+}
+
+/**
+ * Submit telemetry data
+ */
+export function useSubmitTelemetry(
+  options?: Omit<UseMutationOptions<CropYieldTelemetryResponse, Error, CropYieldTelemetryCreate>, "mutationFn">
+) {
+  return useMutation({
+    mutationFn: (payload: CropYieldTelemetryCreate) => submitTelemetry(payload),
+    ...options,
+  })
+}
+
+/**
+ * Trigger background ML retraining
+ */
+export function useTriggerRetraining(
+  options?: Omit<UseMutationOptions<{ message: string; task_id: string }, Error, void>, "mutationFn">
+) {
+  return useMutation({
+    mutationFn: () => triggerRetraining(),
     ...options,
   })
 }

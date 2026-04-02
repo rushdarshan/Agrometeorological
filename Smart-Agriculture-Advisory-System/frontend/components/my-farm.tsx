@@ -1,26 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  ArrowLeft,
-  Cloud,
-  Wind,
-  Droplets,
-  MapPin,
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { AlertCircle, ArrowLeft, CloudRain, Droplets, Leaf, MapPin, Sprout, Sun, Thermometer, Wind } from "lucide-react"
 import { useFarmTimeline, useFarmWeather } from "@/lib/api-client"
-import { SkeletonLoader } from "@/components/shared/skeleton-loader"
-import { CROPS } from "@/lib/constants"
 import type { Farm, Advisory } from "@/lib/types"
+import { ReportHarvestModal } from "./report-harvest-modal"
 
 interface MyFarmProps {
   onBack: () => void
@@ -28,337 +15,124 @@ interface MyFarmProps {
 }
 
 export function MyFarm({ onBack, farmId }: MyFarmProps) {
-  // Use React Query hooks
-  const { data: timeline = null, isLoading: timelineLoading, isError: timelineError } = useFarmTimeline(farmId ?? 0, 30)
-  const { data: weatherData = {}, isLoading: weatherLoading, isError: weatherError } = useFarmWeather(farmId ?? 0)
+  const { data: timeline = null, isLoading: timelineLoading } = useFarmTimeline(farmId ?? 0, 30)
+  const { data: weatherData = {}, isLoading: weatherLoading } = useFarmWeather(farmId ?? 0)
 
-  // Form state for editable fields
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [formData, setFormData] = useState<Partial<Farm>>({
-    farm_name: timeline?.farm_name || "",
-    crop_name: timeline?.crop_name || "Rice",
-    area_hectares: timeline?.farm_name ? 5 : 0,
-    village: timeline?.farm_name ? "Village" : "",
-  })
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Fallback if no farmId and still loading
   if (!farmId && !timelineLoading) {
     return (
-      <div className="p-6 lg:p-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        </div>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>No farm selected. Please select a farm from the dashboard.</AlertDescription>
-        </Alert>
+      <div className="p-8 text-center pt-24 animate-in fade-in">
+        <Button variant="outline" className="rounded-full mb-6 font-bold" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Intelligence
+        </Button>
+        <p className="font-heading text-2xl text-[#1a1c1c] font-black tracking-tight">No ecosystem selected.</p>
       </div>
     )
   }
 
   const weather = (weatherData as any)?.daily?.[0] || (weatherData as any)?.summary
   const advisories = (timeline as any)?.advisories || []
-
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      // Simulate API call - in production, use useUpdateFarm mutation
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setSaveMessage({ type: "success", text: "Farm information updated successfully!" })
-      setIsEditMode(false)
-      setTimeout(() => setSaveMessage(null), 3000)
-    } catch (error) {
-      setSaveMessage({ type: "error", text: "Failed to save farm information. Please try again." })
-      setTimeout(() => setSaveMessage(null), 3000)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  if (timelineError || weatherError) {
-    return (
-      <div className="p-6 lg:p-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        </div>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load farm data. Please try again later.</AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
+  const farmInfo = timeline as any
 
   return (
-    <div className="p-6 lg:p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          {timelineLoading ? <div className="h-8 w-48 bg-secondary rounded animate-pulse" /> : <h1 className="text-3xl font-bold text-foreground">{(timeline as any)?.farm_name || "Farm Details"}</h1>}
-        </div>
-        <Button
-          onClick={() => setIsEditMode(!isEditMode)}
-          variant={isEditMode ? "destructive" : "default"}
-          className="rounded-full"
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* ── Control Bar ──────────────────────────────────────────── */}
+      <div className="flex items-center justify-between pt-8 px-2">
+        <Button variant="ghost" onClick={onBack} className="rounded-full hover:bg-[#355ca8]/10 text-[#355ca8] font-bold">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Grid
+        </Button>
+        <Button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-gradient-to-t from-[#0B3D2E] to-[#396756] text-white rounded-full px-6 py-5 shadow-lg shadow-[#0B3D2E]/20 hover:scale-105 transition-all font-bold"
         >
-          {isEditMode ? "Cancel" : "Edit"}
+          <Leaf className="w-4 h-4 mr-2" /> Log Harvest Data
         </Button>
       </div>
 
-      {saveMessage && (
-        <Alert variant={saveMessage.type === "success" ? "default" : "destructive"} className="mb-6">
-          <div className="flex items-center gap-2">
-            {saveMessage.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertDescription>{saveMessage.text}</AlertDescription>
+      {/* ── Hero Image & Floating Bubbles ────────────────────────── */}
+      <div className="relative w-full h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl bg-[#0B3D2E]">
+        {/* Farm Imagery Background */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
+          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&q=80&w=1200)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent w-1/2" />
+
+        {/* Bottom Left Content */}
+        <div className="absolute bottom-10 left-10 z-10 text-white">
+          <div className="flex items-center gap-3 mb-4">
+            <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-0 px-4 py-1.5 font-bold tracking-wide rounded-full">
+              {farmInfo?.crop_name || "Mixed Crop"}
+            </Badge>
+            <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-0 px-4 py-1.5 font-bold tracking-wide rounded-full">
+              {farmInfo?.area_hectares || "5.0"} ha
+            </Badge>
           </div>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Farm Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Farm Details Card */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Farm Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {timelineLoading ? (
-                <SkeletonLoader type="line" count={4} />
-              ) : (
-                <>
-                  {/* Farm Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Farm Name</label>
-                    {isEditMode ? (
-                      <Input
-                        value={formData.farm_name || ""}
-                        onChange={(e) => setFormData({ ...formData, farm_name: e.target.value })}
-                        placeholder="Enter farm name"
-                        className="rounded-lg"
-                      />
-                    ) : (
-                      <p className="text-foreground">{formData.farm_name || "—"}</p>
-                    )}
-                  </div>
-
-                  {/* Location */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      Location
-                    </label>
-                    {isEditMode ? (
-                      <Input
-                        value={formData.village || ""}
-                        onChange={(e) => setFormData({ ...formData, village: e.target.value })}
-                        placeholder="Village name"
-                        className="rounded-lg"
-                      />
-                    ) : (
-                      <p className="text-muted-foreground">{formData.village || "—"}</p>
-                    )}
-                  </div>
-
-                  {/* Crop Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Crop Type</label>
-                    {isEditMode ? (
-                      <Select value={formData.crop_name || "Rice"} onValueChange={(value) => setFormData({ ...formData, crop_name: value })}>
-                        <SelectTrigger className="rounded-lg">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CROPS.map((crop) => (
-                            <SelectItem key={crop} value={crop}>
-                              {crop}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <p className="text-foreground">{formData.crop_name || "—"}</p>
-                    )}
-                  </div>
-
-                  {/* Farm Size */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Farm Size (hectares)</label>
-                    {isEditMode ? (
-                      <Input
-                        type="number"
-                        value={formData.area_hectares || ""}
-                        onChange={(e) => setFormData({ ...formData, area_hectares: parseFloat(e.target.value) || 0 })}
-                        placeholder="Enter area in hectares"
-                        step="0.1"
-                        min="0.1"
-                        className="rounded-lg"
-                      />
-                    ) : (
-                      <p className="text-foreground">{formData.area_hectares || "—"} ha</p>
-                    )}
-                  </div>
-
-                  {isEditMode && (
-                    <Button onClick={handleSave} disabled={isSaving} className="w-full rounded-lg">
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Advisories Section */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Recent Advisories</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {timelineLoading ? (
-                <SkeletonLoader type="card" count={3} />
-              ) : advisories.length > 0 ? (
-                <div className="space-y-3">
-                  {advisories.slice(0, 5).map((advisory: any) => (
-                    <div key={advisory.id} className="flex items-start justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-medium text-foreground capitalize">
-                            {(advisory.advisory_type || advisory.type || "Advisory")
-                              .toString()
-                              .replace(/_/g, " ")
-                              .toLowerCase()}
-                          </h4>
-                          <Badge
-                            variant={advisory.severity === "high" ? "destructive" : advisory.severity === "medium" ? "secondary" : "default"}
-                            className="rounded-full"
-                          >
-                            {advisory.severity || "medium"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{advisory.message}</p>
-                        <p className="text-xs text-muted-foreground mt-2" suppressHydrationWarning>
-                          {new Date(advisory.generated_at || "").toLocaleDateString('en-US')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">No advisories yet for this farm.</p>
-              )}
-            </CardContent>
-          </Card>
+          <h1 className="font-heading text-5xl font-black mb-2 tracking-tight">
+            {farmInfo?.farm_name || "Loading Ecosystem..."}
+          </h1>
+          <p className="text-white/80 font-medium flex items-center gap-2 text-lg">
+            <MapPin className="w-5 h-5" /> {farmInfo?.village || "Location pending"}
+          </p>
         </div>
 
-        {/* Right Column - Weather & Stats */}
-        <div className="space-y-6">
-          {/* Current Weather */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Cloud className="w-5 h-5" />
-                Weather
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {weatherLoading ? (
-                <SkeletonLoader type="paragraph" count={4} />
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Temperature</span>
-                    <span className="text-2xl font-bold">{weather?.temp_mean || "—"}°C</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Droplets className="w-4 h-4" />
-                      <span>Humidity</span>
-                    </div>
-                    <span className="text-lg font-semibold">{weather?.humidity || "—"}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Wind className="w-4 h-4" />
-                      <span>Wind Speed</span>
-                    </div>
-                    <span className="text-lg font-semibold">{weather?.wind_speed || "—"} km/h</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Rainfall</span>
-                    <span className="text-lg font-semibold">{weather?.rainfall || "0"} mm</span>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Farm Stats */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Farm Stats</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {timelineLoading ? (
-                <SkeletonLoader type="line" count={3} />
-              ) : (
-                <>
-                  <div className="flex justify-between items-center py-2 border-b border-border">
-                    <span className="text-muted-foreground">Total Advisories</span>
-                    <span className="font-bold text-lg">{advisories.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-border">
-                    <span className="text-muted-foreground">High Priority</span>
-                    <span className="font-bold text-lg text-destructive">
-                      {advisories.filter((a: Advisory) => a.severity === "high").length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-muted-foreground">Avg Confidence</span>
-                    <span className="font-bold text-lg">
-                      {advisories.length > 0
-                        ? Math.round(
-                            (advisories.reduce((sum: number, a: Advisory) => sum + a.confidence, 0) / advisories.length) *
-                              100
-                          )
-                        : 0}
-                      %
-                    </span>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+        {/* Right Floating Environment Bubbles */}
+        <div className="absolute top-10 right-10 z-10 flex flex-col gap-4">
+          <div className="bg-white/10 backdrop-blur-[20px] rounded-[1.5rem] p-5 shadow-lg border border-white/10 text-white w-48 text-center" style={{ outline: '1px solid rgba(255,255,255,0.05)' }}>
+             <Thermometer className="w-6 h-6 mx-auto mb-2 text-[#FFB000]" />
+             <p className="text-xs uppercase font-bold text-white/60 tracking-wider">Temperature</p>
+             <p className="font-heading text-3xl font-black mt-1">{weather?.temp_mean?.toFixed(0) || "28"}°C</p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-[20px] rounded-[1.5rem] p-5 shadow-lg border border-white/10 text-white w-48 text-center">
+             <Droplets className="w-6 h-6 mx-auto mb-2 text-[#89ADFF]" />
+             <p className="text-xs uppercase font-bold text-white/60 tracking-wider">Humidity & Rain</p>
+             <p className="font-heading text-xl font-bold mt-1">{weather?.humidity?.toFixed(0) || "65"}% / {weather?.rainfall?.toFixed(0) || "0"}mm</p>
+          </div>
         </div>
       </div>
+
+      {/* ── Intelligence Feed ──────────────────────────────────────── */}
+      <div className="mt-4">
+        <h2 className="font-heading text-3xl font-extrabold text-[#0B3D2E] mb-6 pl-2 tracking-tight">Ecosystem Intelligence</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {advisories.length > 0 ? advisories.map((advisory: any, idx: number) => {
+            const isHigh = advisory.severity === "high"
+            const bgClass = isHigh ? "bg-[#da3633]/5 text-[#da3633]" : "bg-white text-[#0B3D2E]"
+            return (
+              <Card key={advisory.id} className={`${bgClass} border-0 shadow-lg rounded-[2rem] p-6 transition-all hover:-translate-y-1 hover:shadow-xl`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <Badge className={`rounded-full border-0 font-bold px-3 py-1 ${isHigh ? "bg-[#da3633] text-white" : "bg-[#89ADFF]/20 text-[#355ca8]"}`}>
+                    {advisory.severity.toUpperCase()}
+                  </Badge>
+                  <span className="text-sm font-bold opacity-60">
+                    {new Date(advisory.generated_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <h3 className="font-heading text-xl font-black mb-2 capitalize">{advisory.advisory_type.replace(/_/g, " ")}</h3>
+                <p className="text-[#1a1c1c]/80 font-medium leading-relaxed">{advisory.message}</p>
+              </Card>
+            )
+          }) : (
+            <div className="col-span-2 py-10 text-center bg-white rounded-[2rem]">
+              <Sprout className="w-12 h-12 text-[#e5e5e5] mx-auto mb-3" />
+              <p className="font-bold text-[#6b7280]">No anomalies detected in this ecosystem.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <ReportHarvestModal 
+        open={isModalOpen} 
+        onOpenChange={setIsModalOpen} 
+        farmId={farmId}
+        defaultCrop={farmInfo?.crop_name}
+        weatherSummary={weather} 
+      />
     </div>
   )
 }

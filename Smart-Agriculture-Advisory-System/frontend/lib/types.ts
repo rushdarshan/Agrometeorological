@@ -225,6 +225,63 @@ export interface Notification {
   }
 }
 
+// ── ML Predict Types ─────────────────────────────────────────────────
+
+export interface CropPredictRequest {
+  N: number
+  P: number
+  K: number
+  temperature: number
+  humidity: number
+  ph: number
+  rainfall: number
+  top_n?: number
+}
+
+export interface CropPrediction {
+  crop: string
+  confidence: number
+}
+
+export interface CropPredictResponse {
+  recommended_crop: string | null
+  top_predictions: CropPrediction[]
+  shap_explanation: Record<string, number> | null
+  model_version: string | null
+  model_available: boolean
+}
+
+export interface ModelStatus {
+  model_available: boolean
+  model_type?: string
+  accuracy?: number
+  n_classes?: number
+  version?: string
+  features?: string[]
+  classes?: string[]
+}
+
+export interface CropYieldTelemetryCreate {
+  farm_id?: number | null
+  soil_nitrogen: number
+  soil_phosphorus: number
+  soil_potassium: number
+  temperature: number
+  humidity: number
+  soil_ph: number
+  rainfall: number
+  crop_label: string
+  yield_tons_per_hectare?: number | null
+  is_successful: boolean
+}
+
+export interface CropYieldTelemetryResponse {
+  id: number
+  farm_id: number | null
+  crop_label: string
+  created_at: string
+}
+
 // ── Theme Types ──────────────────────────────────────────────────────────
 
 export type ThemeMode = "light" | "dark" | "system"

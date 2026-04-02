@@ -1,21 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Sidebar } from "@/components/sidebar"
+import { TopNavigation, type ViewType } from "@/components/top-navigation"
 import { Dashboard } from "@/components/dashboard"
 import { MyFarm } from "@/components/my-farm"
 import { Advisories } from "@/components/advisories"
 import { Profile } from "@/components/profile"
+import { MLPredict } from "@/components/ml-predict"
+import { MapView } from "@/components/map-view"
 import { RegisterFarmerModal } from "@/components/register-farmer-modal"
 import { useFarms } from "@/lib/api-client"
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<"dashboard" | "farm" | "advisories" | "profile">("dashboard")
+  const [activeView, setActiveView] = useState<ViewType>("dashboard")
   const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>()
   const [showRegister, setShowRegister] = useState(false)
 
   // Fetch farms so user can navigate to them
-  const { data: farms = [] } = useFarms("Kaira", 10)
+  const { data: farmsData } = useFarms("Kanchipuram", 10)
+  const farms = (farmsData as any[]) || []
 
   // Auto-select first farm on mount
   useEffect(() => {
@@ -30,33 +33,35 @@ export default function Home() {
   }
 
   const handleViewAllTasks = () => {
-    // Navigate to advisories page to see all tasks/advisories
     setActiveView("advisories")
   }
 
   const handleViewAllFields = () => {
-    // Navigate to profile to see all farms/fields
     setActiveView("profile")
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} />
-      <main className="flex-1 overflow-auto">
+    <div className="flex flex-col min-h-screen bg-background relative pt-32 pb-12 px-6 lg:px-12">
+      <TopNavigation activeView={activeView} setActiveView={setActiveView} onAddFarmer={() => setShowRegister(true)} />
+      
+      <main className="flex-1 w-full max-w-7xl mx-auto overflow-hidden">
         {activeView === "dashboard" && (
           <Dashboard
             onNavigateToFarm={navigateToFarm}
             onAddFarmer={() => setShowRegister(true)}
             onViewAllTasks={handleViewAllTasks}
             onViewAllFields={handleViewAllFields}
-            userDistrict="Kaira"
-            userName="Ramesh Patel"
+            userDistrict="Kanchipuram"
+            userName="Murugan Selvam"
           />
         )}
-        {activeView === "farm"        && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}
-        {activeView === "advisories"  && <Advisories />}
-        {activeView === "profile"     && <Profile />}
+        {activeView === "farm" && <MyFarm onBack={() => setActiveView("dashboard")} farmId={selectedFarmId} />}
+        {activeView === "map" && <MapView />}
+        {activeView === "predict" && <MLPredict />}
+        {activeView === "advisories" && <Advisories />}
+        {activeView === "profile" && <Profile />}
       </main>
+      
       {showRegister && (
         <RegisterFarmerModal
           onClose={() => setShowRegister(false)}

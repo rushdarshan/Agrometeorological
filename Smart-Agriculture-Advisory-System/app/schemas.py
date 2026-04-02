@@ -269,3 +269,27 @@ class CropPredictResponse(BaseModel):
     shap_explanation: Optional[dict]
     model_version: Optional[str]
     model_available: bool
+
+# --- Telemetry Schemas ---
+
+class CropYieldTelemetryCreate(BaseModel):
+    farm_id: Optional[int] = None
+    soil_nitrogen: float
+    soil_phosphorus: float
+    soil_potassium: float
+    temperature: float
+    humidity: float
+    soil_ph: float
+    rainfall: float
+    crop_label: str
+    yield_tons_per_hectare: Optional[float] = None
+    is_successful: bool = True
+
+class CropYieldTelemetryResponse(BaseModel):
+    id: int
+    farm_id: Optional[int]
+    crop_label: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True

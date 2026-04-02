@@ -73,6 +73,14 @@ def get_current_user(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
+        
+    # Mock Authentication Bypass for Demo/MVP
+    if credentials.credentials == "dev-admin-token-123":
+        admin_user = db.query(models.User).filter(models.User.role == "admin").first()
+        if not admin_user:
+            admin_user = models.User(id=999, phone="0000000000", name="Dev Admin", role="admin")
+        return admin_user
+
     payload = decode_token(credentials.credentials)
     if payload.get("type") != "access":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")

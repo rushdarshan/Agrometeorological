@@ -6,35 +6,35 @@
 // ── Districts ────────────────────────────────────────────────────────────
 
 export const DISTRICTS = [
-  "Kaira",
-  "Vadodara",
-  "Anand",
-  "Banaskantha",
-  "Botad",
-  "Chhota Udaipur",
-  "Dahod",
-  "Dang",
-  "Devbhoomi Dwarka",
-  "Gandhinagar",
-  "Gir Somnath",
-  "Jamnagar",
-  "Junagadh",
-  "Kheda",
-  "Kutch",
-  "Mahisagar",
-  "Morbi",
-  "Narmada",
-  "Navsari",
-  "Panchmahal",
-  "Patan",
-  "Porbandar",
-  "Rajkot",
-  "Sabarkantha",
-  "Salsuit",
-  "Surat",
-  "Surendranagar",
-  "Tapi",
-  "Valsad",
+  "Kanchipuram",
+  "Chennai",
+  "Chengalpattu",
+  "Coimbatore",
+  "Cuddalore",
+  "Dharmapuri",
+  "Dindigul",
+  "Erode",
+  "Kanyakumari",
+  "Karur",
+  "Krishnagiri",
+  "Madurai",
+  "Nagapattinam",
+  "Namakkal",
+  "Nilgiris",
+  "Perambalur",
+  "Pudukkottai",
+  "Ramanathapuram",
+  "Salem",
+  "Sivagangai",
+  "Thanjavur",
+  "Theni",
+  "Tiruchirappalli",
+  "Tirunelveli",
+  "Tirupur",
+  "Tiruvallur",
+  "Tiruvannamalai",
+  "Vellore",
+  "Villupuram",
 ] as const
 
 export type District = (typeof DISTRICTS)[number]
@@ -111,7 +111,7 @@ export type ViewRoute = (typeof VIEW_ROUTES)[keyof typeof VIEW_ROUTES]
 // ── API Configuration ────────────────────────────────────────────────────
 
 export const API_CONFIG = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  baseUrl: "/api",
   timeout: 30000, // 30 seconds
   retryAttempts: 3,
   retryDelay: 1000, // 1 second (exponential backoff after)
@@ -142,6 +142,10 @@ export const QUERY_KEYS = {
   // User
   profile: () => ["profile"],
   preferences: () => ["preferences"],
+
+  // ML Predict
+  predict: () => ["predict"],
+  modelStatus: () => ["model-status"],
 
   // Health
   health: () => ["health"],

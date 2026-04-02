@@ -39,13 +39,13 @@ export function Profile() {
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   const [formData, setFormData] = useState<Partial<ProfileData>>({
-    name: "Ramesh Patel",
+    name: "Murugan Selvam",
     phone: "+91 9876543210",
-    email: "ramesh@example.com",
-    village: "Mahisagar Village",
-    district: "Kaira",
-    state: "Gujarat",
-    preferred_language: "gu",
+    email: "murugan@example.com",
+    village: "Uthiramerur",
+    district: "Kanchipuram",
+    state: "Tamil Nadu",
+    preferred_language: "ta",
   })
 
   const [passwordData, setPasswordData] = useState({
@@ -54,8 +54,8 @@ export function Profile() {
     confirmPassword: "",
   })
 
-  // Fetch farms from API - default to Kaira district for demo
-  const { data: farmsData = [], isLoading: farmsLoading } = useFarms("Kaira", 10)
+  // Fetch farms from API - default to Kanchipuram district for demo
+  const { data: farmsData = [], isLoading: farmsLoading } = useFarms("Kanchipuram", 10)
   const farms = farmsData || []
 
   const profileStats = [
@@ -110,19 +110,14 @@ export function Profile() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-5 lg:p-8 animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Profile</h1>
-        <div className="flex items-center gap-3">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Farm
-          </Button>
-          <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center">
-            <span className="text-lg">👨‍🌾</span>
-          </div>
-        </div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">Profile</h1>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-5 text-sm">
+          <Plus className="w-4 h-4 mr-1.5" />
+          Add Farm
+        </Button>
       </div>
 
       {saveMessage && (
@@ -146,7 +141,7 @@ export function Profile() {
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
                 <span className="text-5xl">👨‍🌾</span>
               </div>
-              <h2 className="text-xl font-bold text-foreground mb-1">{formData.name || "Farmer"}</h2>
+              <h2 className="font-heading text-xl font-bold text-foreground mb-1">{formData.name || "Farmer"}</h2>
               <div className="flex items-center gap-1 text-muted-foreground mb-6">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">
@@ -157,7 +152,7 @@ export function Profile() {
               <div className="flex items-center justify-center gap-8 w-full py-4 border-t border-b border-border">
                 {profileStats.map((stat) => (
                   <div key={stat.label} className="text-center">
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <p className={`font-heading text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
                 ))}

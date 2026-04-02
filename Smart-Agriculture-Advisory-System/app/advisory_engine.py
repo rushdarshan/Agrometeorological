@@ -429,12 +429,24 @@ def _run_ml_advisory(farm_data: dict, weather: dict) -> Optional[dict]:
         P = farm_data.get("soil_phosphorus") or 40
         K = farm_data.get("soil_potassium") or 50
         ph = farm_data.get("soil_ph") or 6.5
-        temperature = weather.get("temp_mean", 25)
-        humidity = weather.get("humidity", 70)
-        rainfall = weather.get("rainfall_7d", 100)
+        temperature = weather.get("temp_mean", 25.0)
+        humidity = weather.get("humidity", 70.0)
+        rainfall_7d = weather.get("rainfall_7d", 15.0)
+
+        # Extrapolation Math Patch (MVP -> Matured)
+        # The ML Model expects a 95-120 day seasonal rainfall (e.g., 60mm-300mm).
+        # Multiplying 7-day rainfall by 14 is too volatile.
+        # Instead, we blend the current 7-day forecast with a 91-day historical regional average.
+        # Assuming typical regional baseline is 1.5mm/day (136.5mm over 91 days).
+        # We weight the current 7-day pattern to affect the upcoming 3 weeks (21 days -> rainfall_7d * 3),
+        # plus 70 days of baseline (105mm).
+        extrapolated_rainfall = (rainfall_7d * 3) + 105.0
+        
+        # Cap to prevent random forest from drifting outside expected feature space
+        extrapolated_rainfall = max(20.0, min(extrapolated_rainfall, 350.0))
 
         result = predict_crop(N=N, P=P, K=K, temperature=temperature,
-                              humidity=humidity, ph=ph, rainfall=rainfall)
+                              humidity=humidity, ph=ph, rainfall=extrapolated_rainfall)
 
         if not result.get("recommended_crop"):
             return None

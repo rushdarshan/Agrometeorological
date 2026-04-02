@@ -42,8 +42,16 @@ async def register_farmer(
             f"POINT({farmer_data.longitude} {farmer_data.latitude})",
             srid=4326
         )
+        d = 0.005
+        lon = farmer_data.longitude
+        lat = farmer_data.latitude
+        farm_location = WKTElement(
+            f"POLYGON(({lon} {lat}, {lon+d} {lat}, {lon+d} {lat+d}, {lon} {lat+d}, {lon} {lat}))",
+            srid=4326
+        )
     else:
         location = f"{farmer_data.latitude},{farmer_data.longitude}"
+        farm_location = location
 
     farmer = models.Farmer(
         phone=farmer_data.phone,
@@ -64,7 +72,7 @@ async def register_farmer(
     farm = models.Farm(
         farmer_id=farmer.id,
         farm_name=f"{farmer_data.name}'s Farm",
-        location=location,
+        location=farm_location,
         area_hectares=farmer_data.area_hectares,
         crop_name=farmer_data.crop_name,
         sowing_date=farmer_data.sowing_date

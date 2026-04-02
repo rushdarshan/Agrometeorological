@@ -7,20 +7,29 @@ import os
 import math
 import logging
 import random
+import json
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 
 import requests
+import redis
 
 logger = logging.getLogger(__name__)
 
 OWM_BASE_URL = "https://api.openweathermap.org/data/2.5"
-OWM_ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall"
+OWM_FORECAST_URL = f"{OWM_BASE_URL}/forecast"
 
+# Initialize Redis
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+try:
+    redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+except Exception as e:
+    logger.warning(f"Could not connect to Redis: {e}. Weather caching disabled.")
+    redis_client = None
 
 def _is_api_enabled() -> bool:
     key = os.getenv("OPENWEATHERMAP_API_KEY", "")
-    return bool(key) and key not in ("your_api_key", "")
+    return bool(key) and key not in ("your_api_key", "", "demo_key")
 
 
 def fetch_weather_forecast(lat: float, lon: float) -> List[Dict]:
@@ -33,43 +42,105 @@ def fetch_weather_forecast(lat: float, lon: float) -> List[Dict]:
 
     Falls back to mock data if API key is not configured.
     """
+    # Round coordinates to 2 decimal places (approx 1.1km grid) to share cache among nearby farms
+    cache_lat = round(lat, 2)
+    cache_lon = round(lon, 2)
+    cache_key = f"weather:{cache_lat}:{cache_lon}"
+    
+    if redis_client:
+        try:
+            cached_data = redis_client.get(cache_key)
+            if cached_data:
+                logger.debug(f"Weather cache hit for {cache_lat},{cache_lon}")
+                forecasts = json.loads(cached_data)
+                # Convert date strings back to datetime
+                for f in forecasts:
+                    f["forecast_date"] = datetime.fromisoformat(f["forecast_date"])
+                return forecasts
+        except Exception as e:
+            logger.error(f"Redis cache read error: {e}")
+
+    # Cache miss
     if _is_api_enabled():
-        return _fetch_from_api(lat, lon)
+        forecasts = _fetch_from_api(lat, lon)
     else:
         logger.info("OpenWeatherMap key not configured. Using mock weather data.")
-        return _generate_mock_forecast(lat, lon)
+        forecasts = _generate_mock_forecast(lat, lon)
+        
+    if redis_client and forecasts:
+        try:
+            # Serialize datetimes to isoformat for JSON caching
+            cache_payload = []
+            for f in forecasts:
+                item = dict(f)
+                item["forecast_date"] = item["forecast_date"].isoformat()
+                cache_payload.append(item)
+            # TTL: 3 hours (10800 seconds)
+            redis_client.setex(cache_key, 10800, json.dumps(cache_payload))
+            logger.debug(f"Weather saved to cache for {cache_key}")
+        except Exception as e:
+            logger.error(f"Redis cache write error: {e}")
+            
+    return forecasts
 
 
 def _fetch_from_api(lat: float, lon: float) -> List[Dict]:
-    """Live fetch from OpenWeatherMap One Call API 3.0."""
+    """Live fetch from OpenWeatherMap 5-Day/3-Hour Forecast API."""
     api_key = os.getenv("OPENWEATHERMAP_API_KEY")
     params = {
         "lat": lat,
         "lon": lon,
         "appid": api_key,
         "units": "metric",
-        "exclude": "current,minutely,hourly,alerts"
     }
     try:
-        resp = requests.get(OWM_ONECALL_URL, params=params, timeout=10)
+        resp = requests.get(OWM_FORECAST_URL, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json()
 
+        # Aggregate 3-hour slices into daily max/min/mean, humidity, and rainfall
+        daily_aggregation = {}
+        for item in data.get("list", []):
+            dt = datetime.utcfromtimestamp(item["dt"])
+            day_str = dt.strftime("%Y-%m-%d")
+            
+            if day_str not in daily_aggregation:
+                daily_aggregation[day_str] = {
+                    "forecast_date": dt.replace(hour=0, minute=0, second=0, microsecond=0),
+                    "temps": [],
+                    "humidities": [],
+                    "wind_speeds": [],
+                    "rainfall": 0.0,
+                    "raw_data": []
+                }
+            
+            agg = daily_aggregation[day_str]
+            agg["temps"].append(item["main"]["temp"])
+            if "humidity" in item["main"]:
+                agg["humidities"].append(item["main"]["humidity"])
+            if "speed" in item.get("wind", {}):
+                agg["wind_speeds"].append(item["wind"]["speed"])
+            # The 'rain' object usually contains '3h'
+            if "rain" in item and "3h" in item["rain"]:
+                agg["rainfall"] += item["rain"]["3h"]
+                
+            agg["raw_data"].append(item)
+
         forecasts = []
-        for i, day in enumerate(data.get("daily", [])[:7]):
-            dt = datetime.utcfromtimestamp(day["dt"])
+        for i, (day_str, agg) in enumerate(sorted(daily_aggregation.items())[:5]):
             forecasts.append({
-                "forecast_date": dt,
-                "temperature_min": day["temp"]["min"],
-                "temperature_max": day["temp"]["max"],
-                "temperature_mean": (day["temp"]["min"] + day["temp"]["max"]) / 2,
-                "humidity": day["humidity"],
-                "rainfall": day.get("rain", 0.0),
-                "wind_speed": day.get("wind_speed"),
-                "source": "openweathermap",
+                "forecast_date": agg["forecast_date"],
+                "temperature_min": round(min(agg["temps"]), 2),
+                "temperature_max": round(max(agg["temps"]), 2),
+                "temperature_mean": round(sum(agg["temps"]) / len(agg["temps"]), 2),
+                "humidity": round(sum(agg["humidities"]) / len(agg["humidities"]), 2) if agg["humidities"] else 0.0,
+                "rainfall": round(agg["rainfall"], 2),
+                "wind_speed": round(sum(agg["wind_speeds"]) / len(agg["wind_speeds"]), 2) if agg["wind_speeds"] else 0.0,
+                "source": "openweathermap_forecast",
                 "lead_time_hours": i * 24,
-                "raw_data": day
+                "raw_data": agg["raw_data"]
             })
+            
         return forecasts
 
     except requests.RequestException as e:

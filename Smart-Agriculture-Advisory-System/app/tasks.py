@@ -97,6 +97,25 @@ def send_sms_task(
 
     db = SessionLocal()
     try:
+        # --- Circuit Breaker: Rate Limiting ---
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        recent_messages = db.query(models.Message).filter(
+            models.Message.farmer_id == farmer_id,
+            models.Message.created_at >= today_start,
+            models.Message.status != "failed"
+        ).count()
+
+        if recent_messages >= 2:
+            logger.warning(f"Rate limit exceeded: Farmer {farmer_id} already got {recent_messages} messages today.")
+            if db_message_id:
+                msg = db.query(models.Message).filter(models.Message.id == db_message_id).first()
+                if msg:
+                    msg.status = "failed"
+                    msg.error_message = "Rate limit exceeded (max 2/day)"
+                    db.commit()
+            return {"success": False, "error": "Rate limit exceeded"}
+        # ---------------------------------------
+
         logger.info(f"Sending SMS to farmer {farmer_id} (phone: {phone_number[:3]}***)")
         result = send_sms(phone_number, message_text, advisory_id)
 
@@ -115,8 +134,17 @@ def send_sms_task(
                     logger.warning(f"SMS delivery failed: farmer={farmer_id}, error={result.get('error')}")
                 db.commit()
 
-        # If SMS delivery failed and not due to SMS being disabled, retry
-        if not result["success"] and result.get("error") != "SMS disabled in configuration":
+        # Do not retry for non-recoverable errors
+        non_recoverable_errors = [
+            "SMS disabled in configuration",
+            "Phone number is empty",
+            "Invalid phone number length"
+        ]
+        error_msg = result.get("error", "")
+        
+        should_retry = not result["success"] and not any(e in error_msg for e in non_recoverable_errors)
+        
+        if should_retry:
             logger.warning(f"Retrying SMS for farmer {farmer_id}, attempt {self.request.retries + 1}")
             raise self.retry(
                 exc=Exception(result.get("error", "SMS send failed")),
@@ -202,6 +230,68 @@ def send_bulk_sms_task(farm_id: int, message_text: str, advisory_id: int = None)
     except Exception as e:
         logger.error(f"Error in bulk SMS task for farm {farm_id}: {str(e)}", exc_info=True)
         return {"sent": 0, "error": str(e)}
+    finally:
+        db.close()
+
+
+@celery_app.task(bind=True, max_retries=1, name="retrain_ml_model_task")
+def retrain_ml_model_task(self, admin_id: int):
+    """
+    Background worker task to trigger ML model retraining using fresh telemetry data.
+    """
+    logger.info(f"ML Retraining initiated by Admin ID: {admin_id}")
+    try:
+        from app.model_trainer import train_and_save
+        from app.models import CropYieldTelemetry
+        from app.database import SessionLocal
+        import pandas as pd
+        from pathlib import Path
+        
+        db = SessionLocal()
+        
+        # 1. Fetch live telemetry data
+        recent_telemetry = db.query(CropYieldTelemetry).filter(
+            CropYieldTelemetry.is_successful == True
+        ).all()
+        
+        # 2. Convert to DataFrame mimicking the Kaggle CSV
+        if recent_telemetry:
+            logger.info(f"Injecting {len(recent_telemetry)} fresh telemetry rows into training corpus.")
+            new_data = []
+            for t in recent_telemetry:
+                new_data.append({
+                    "N": t.soil_nitrogen,
+                    "P": t.soil_phosphorus,
+                    "K": t.soil_potassium,
+                    "temperature": t.temperature,
+                    "humidity": t.humidity,
+                    "ph": t.soil_ph,
+                    "rainfall": t.rainfall,
+                    "label": t.crop_label
+                })
+            new_df = pd.DataFrame(new_data)
+            
+            # Temporary: Save to a staging CSV and let `train_and_save` use an updated dataset,
+            # or dynamically inject into `train_and_save`. 
+            # For this pipeline, we rewrite the local CSV before triggering the trainer script
+            BASE_DIR = Path(__file__).parent.parent
+            DATA_PATH = BASE_DIR / "Crop_recommendation.csv"
+            
+            if DATA_PATH.exists():
+                old_df = pd.read_csv(DATA_PATH)
+                combined_df = pd.concat([old_df, new_df], ignore_index=True)
+                combined_df.to_csv(DATA_PATH, index=False)
+                logger.info(f"Updated Crop_recommendation.csv. New shape: {combined_df.shape}")
+        
+        # 3. Trigger Retrain (Updates .joblib models and metadata.json automatically)
+        model, le, metadata = train_and_save()
+        
+        logger.info(f"ML Model Retraining completed successfully. New Version: {metadata.get('version')}")
+        return {"success": True, "samples_injected": len(recent_telemetry) if recent_telemetry else 0}
+        
+    except Exception as e:
+        logger.error(f"Failed to retrain ML model: {e}", exc_info=True)
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -308,9 +398,39 @@ def generate_farm_advisories_task(farm_id: int):
                     db.add(advisory)
                     db.flush()
 
-                    # Queue SMS for this advisory
-                    logger.debug(f"Queuing SMS for advisory {adv['advisory_type']}, farm {farm_id}")
-                    send_bulk_sms_task.delay(farm.id, adv["message"], advisory.id)
+                    # Determine if we should trigger an SMS (State-Change & Critical Alert Logic)
+                    should_send_sms = False
+                    
+                    # 1. Urgent / Critical Alerts always fire
+                    if adv.get("severity") == "high":
+                        should_send_sms = True
+                    elif adv.get("advisory_type") in ["disease_alert", "pest_alert", "frost_warning", "heat_stress"]:
+                        should_send_sms = True
+                    # 2. ML Model Delta Tracking
+                    elif adv.get("generated_by") == "ml_model":
+                        last_ml_adv = db.query(models.Advisory).filter(
+                            models.Advisory.farm_id == farm.id,
+                            models.Advisory.generated_by == "ml_model",
+                            models.Advisory.id != advisory.id
+                        ).order_by(models.Advisory.generated_at.desc()).first()
+                        
+                        if last_ml_adv:
+                            # Title usually holds the crop prediction. If prediction changed, fire SMS!
+                            if last_ml_adv.title != advisory.title:
+                                should_send_sms = True
+                            # If confidence dramatically shifted down (e.g. >15% drop)
+                            elif last_ml_adv.confidence is not None and advisory.confidence is not None:
+                                if (last_ml_adv.confidence - advisory.confidence) > 0.15:
+                                    should_send_sms = True
+                        else:
+                            # First time ML recommendation ever
+                            should_send_sms = True
+                    
+                    if should_send_sms:
+                        logger.debug(f"Queuing SMS for advisory {adv['advisory_type']}, farm {farm_id}")
+                        send_bulk_sms_task.delay(farm.id, adv["message"], advisory.id)
+                    else:
+                        logger.debug(f"Skipping SMS for routine advisory {adv['advisory_type']}, farm {farm_id}")
                     created += 1
                 except Exception as adv_error:
                     logger.error(f"Failed to create advisory for farm {farm_id}: {str(adv_error)}", exc_info=True)

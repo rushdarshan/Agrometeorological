@@ -73,7 +73,12 @@ def send_sms(
             message_text = message_text[:157] + "..."
 
         from_number = os.getenv("TWILIO_PHONE_NUMBER", "+1234567890")
-        formatted = format_phone_number(phone_number)
+        
+        try:
+            formatted = format_phone_number(phone_number)
+        except ValueError as ve:
+            logger.error(f"E.164 Validation Failed for {phone_number}: {ve}")
+            return {"success": False, "message_sid": None, "error": str(ve)}
 
         message = client.messages.create(
             body=message_text,
@@ -106,13 +111,20 @@ def check_message_status(message_sid: str) -> Optional[str]:
 def format_phone_number(phone: str) -> str:
     """
     Format phone to E.164. Assumes Indian (+91) if no country code.
+    Raises ValueError if the number is fundamentally invalid.
 
     Examples:
         9876543210       → +919876543210
         +919876543210    → +919876543210
         919876543210     → +919876543210
     """
+    if not phone:
+        raise ValueError("Phone number is empty")
+        
     clean = ''.join(c for c in phone if c.isdigit())
+    
+    if len(clean) < 10 or len(clean) > 15:
+        raise ValueError(f"Invalid phone number length: {len(clean)} digits")
 
     if clean.startswith('91') and len(clean) == 12:
         return f"+{clean}"
@@ -120,4 +132,5 @@ def format_phone_number(phone: str) -> str:
         return f"+91{clean}"
     if phone.startswith('+') and len(clean) >= 10:
         return f"+{clean}"
-    return f"+91{clean}" if len(clean) == 10 else (f"+{clean}" if not phone.startswith('+') else phone)
+        
+    return f"+91{clean}" if len(clean) == 10 else f"+{clean}"

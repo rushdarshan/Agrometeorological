@@ -1,12 +1,18 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Manrope, Plus_Jakarta_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from '@/lib/providers'
 import './globals.css'
 
-const inter = Inter({ 
+const manrope = Manrope({ 
   subsets: ["latin"],
-  variable: '--font-inter'
+  variable: '--font-manrope'
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: '--font-plus-jakarta',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -46,7 +52,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${manrope.variable} ${plusJakartaSans.variable} font-sans antialiased text-[#1a1c1c] bg-[#f9f9f9]`}>
         <Providers>
           {children}
           <Analytics />

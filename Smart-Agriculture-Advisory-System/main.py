@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import uuid
 
 from app.routers import auth, weather, advisories, dashboard, feedback
-from app.routers import predict
+from app.routers import predict, ml
 from app.logging_config import get_logger
 
 load_dotenv()
@@ -103,6 +103,7 @@ app.include_router(advisories.router, prefix="/api/advisories", tags=["Advisorie
 app.include_router(dashboard.router,  prefix="/api/dashboard",  tags=["Dashboard"])
 app.include_router(feedback.router,   prefix="/api/feedback",   tags=["Feedback"])
 app.include_router(predict.router,    prefix="/api/predict",    tags=["ML Prediction"])
+app.include_router(ml.router)
 
 # Serve static files
 if os.path.exists("static"):

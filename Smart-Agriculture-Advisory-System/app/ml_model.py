@@ -27,11 +27,16 @@ _model = None
 _encoder = None
 _metadata = None
 _shap_explainer = None
-
+_last_loaded_mtime = 0.0
 
 def _load_artifacts():
-    global _model, _encoder, _metadata
-    if _model is not None:
+    global _model, _encoder, _metadata, _last_loaded_mtime
+    
+    current_mtime = 0.0
+    if METADATA_PATH.exists():
+        current_mtime = os.path.getmtime(METADATA_PATH)
+        
+    if _model is not None and current_mtime == _last_loaded_mtime:
         return True
 
     if not MODEL_PATH.exists() or not ENCODER_PATH.exists():
@@ -47,6 +52,10 @@ def _load_artifacts():
         if METADATA_PATH.exists():
             with open(METADATA_PATH) as f:
                 _metadata = json.load(f)
+        _last_loaded_mtime = current_mtime
+        global _shap_explainer
+        _shap_explainer = None  # Reset SHAP explainer so it rebuilds on newly loaded model
+        
         logger.info(f"ML model loaded. Version: {(_metadata or {}).get('version', 'unknown')}")
         return True
     except Exception as e:

@@ -11,7 +11,7 @@ USE_POSTGIS = "postgresql" in os.getenv("DATABASE_URL", "sqlite")
 
 # Conditional import
 if USE_POSTGIS:
-    from sqlalchemy.ext.gis import Geometry
+    from geoalchemy2 import Geometry
 else:
     # For SQLite, we'll just use String to store location as "lat,lng"
     Geometry = None
@@ -245,3 +245,28 @@ class BroadcastMessage(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     sender = relationship("User", back_populates="messages_sent")
+
+class CropYieldTelemetry(Base):
+    """Telemetry data from successful harvest for ML retraining."""
+    __tablename__ = "crop_yield_telemetry"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    farm_id = Column(Integer, ForeignKey("farms.id"), nullable=True)
+    
+    # ML Features
+    soil_nitrogen = Column(Float)
+    soil_phosphorus = Column(Float)
+    soil_potassium = Column(Float)
+    temperature = Column(Float)
+    humidity = Column(Float)
+    soil_ph = Column(Float)
+    rainfall = Column(Float)
+    
+    # Target Label
+    crop_label = Column(String, index=True)
+    
+    # Yield metric / success flag
+    yield_tons_per_hectare = Column(Float, nullable=True)
+    is_successful = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)

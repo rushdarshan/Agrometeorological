@@ -33,9 +33,9 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
     resolver: zodResolver(FarmerRegisterSchema),
     defaultValues: {
       phone: "91",
-      state: "Gujarat",
-      latitude: 22.75,
-      longitude: 72.68,
+      state: "Tamil Nadu",
+      latitude: 12.83,
+      longitude: 79.70,
       sowing_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       consented_advisory: false,
       consented_data_use: false,
@@ -120,7 +120,7 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
                 </label>
                 <Input
                   {...register("name")}
-                  placeholder="e.g. Ramesh Patel"
+                  placeholder="e.g. Murugan Selvam"
                   className="rounded-lg"
                   disabled={isLoading}
                 />
@@ -201,7 +201,7 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
                 </label>
                 <Input
                   {...register("state")}
-                  placeholder="Gujarat"
+                  placeholder="Tamil Nadu"
                   className="rounded-lg"
                   disabled
                 />
@@ -305,7 +305,7 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
                   step="0.0001"
                   min="-90"
                   max="90"
-                  placeholder="22.75"
+                  placeholder="12.83"
                   className="rounded-lg"
                   disabled={isLoading}
                 />
@@ -325,7 +325,7 @@ export function RegisterFarmerModal({ onClose, onSuccess }: RegisterFarmerModalP
                   step="0.0001"
                   min="-180"
                   max="180"
-                  placeholder="72.68"
+                  placeholder="79.70"
                   className="rounded-lg"
                   disabled={isLoading}
                 />
